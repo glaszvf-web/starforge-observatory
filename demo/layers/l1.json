@@ -1,0 +1,1442 @@
+[
+  {
+    "id": 1,
+    "h": "demo0001",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "core",
+    "title": "演示条目 1",
+    "text": "把可视化升级拆成数据、场景、交互、验证四段，每段都能单独验收。",
+    "date": "2026-11-06",
+    "heat": 0.92,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 2
+    }
+  },
+  {
+    "id": 2,
+    "h": "demo0002",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "core",
+    "title": "演示条目 2",
+    "text": "先做能跑的最小场景，再逐层加星尘、星环、连线与冲击波。",
+    "date": "2026-11-06",
+    "heat": 0.88,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 3
+    }
+  },
+  {
+    "id": 3,
+    "h": "demo0003",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 3",
+    "text": "每个里程碑都保留可回退的旧版本页面，方便对照。",
+    "date": "2026-11-06",
+    "heat": 0.71,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 4
+    }
+  },
+  {
+    "id": 4,
+    "h": "demo0004",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 4",
+    "text": "交付前固定跑一次全流程截图，不靠肉眼判断“应该没问题”。",
+    "date": "2026-11-06",
+    "heat": 0.76,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 5
+    }
+  },
+  {
+    "id": 5,
+    "h": "demo0005",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "core",
+    "title": "演示条目 5",
+    "text": "遇到渲染异常时先定位是数据、材质还是后处理，不盲目重写。",
+    "date": "2026-11-06",
+    "heat": 0.83,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 6
+    }
+  },
+  {
+    "id": 6,
+    "h": "demo0006",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 6",
+    "text": "项目结构按 bin / web / assets / docs 分层，入口文件保持单一。",
+    "date": "2026-11-06",
+    "heat": 0.64,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 7
+    }
+  },
+  {
+    "id": 7,
+    "h": "demo0007",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 7",
+    "text": "把“炫酷”和“看得懂”拆成两条验收线，避免只堆特效。",
+    "date": "2026-11-06",
+    "heat": 0.79,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 8
+    }
+  },
+  {
+    "id": 8,
+    "h": "demo0008",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 8",
+    "text": "演示数据与真实数据分离，公开包只带合成样本。",
+    "date": "2026-11-06",
+    "heat": 0.55,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 9
+    }
+  },
+  {
+    "id": 9,
+    "h": "demo0009",
+    "section": "项目节奏 · 里程碑与交付",
+    "group": "项目节奏",
+    "sceneKey": "demo::1",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 9",
+    "text": "每次重构后先看控制台错误，再看帧率和布局。",
+    "date": "2026-11-06",
+    "heat": 0.68,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "项目节奏"
+    ],
+    "sceneId": "s01",
+    "l0": {
+      "file": "demo.md",
+      "line": 10
+    }
+  },
+  {
+    "id": 10,
+    "h": "demo0010",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "core",
+    "title": "演示条目 10",
+    "text": "三维场景使用 Three.js，模块文件放在本地，断网也能启动。",
+    "date": "2026-11-06",
+    "heat": 0.86,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 11
+    }
+  },
+  {
+    "id": 11,
+    "h": "demo0011",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 11",
+    "text": "服务端只用 Node 内置 http 模块，避免额外框架依赖。",
+    "date": "2026-11-06",
+    "heat": 0.74,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 12
+    }
+  },
+  {
+    "id": 12,
+    "h": "demo0012",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 12",
+    "text": "静态资源与 API 走同一个本地端口，减少启动步骤。",
+    "date": "2026-11-06",
+    "heat": 0.61,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 13
+    }
+  },
+  {
+    "id": 13,
+    "h": "demo0013",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 13",
+    "text": "图标由 SVG 渲染成多尺寸 PNG，再手工拼成 ICO。",
+    "date": "2026-11-06",
+    "heat": 0.72,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 14
+    }
+  },
+  {
+    "id": 14,
+    "h": "demo0014",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 14",
+    "text": "启动脚本用 UTF-16LE 写入，避免中文路径在 VBS 中乱码。",
+    "date": "2026-11-06",
+    "heat": 0.58,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 15
+    }
+  },
+  {
+    "id": 15,
+    "h": "demo0015",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "core",
+    "title": "演示条目 15",
+    "text": "工具优先本地化、可离线、可审计，不引入不必要的云端依赖。",
+    "date": "2026-11-06",
+    "heat": 0.81,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 16
+    }
+  },
+  {
+    "id": 16,
+    "h": "demo0016",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 16",
+    "text": "依赖版本固定，升级前先跑一遍冒烟测试。",
+    "date": "2026-11-06",
+    "heat": 0.69,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 17
+    }
+  },
+  {
+    "id": 17,
+    "h": "demo0017",
+    "section": "工具链 · 本地优先",
+    "group": "工具链",
+    "sceneKey": "demo::2",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 17",
+    "text": "开发脚本统一用 .mjs，直接 node 执行，不需要构建步骤。",
+    "date": "2026-11-06",
+    "heat": 0.52,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工具链"
+    ],
+    "sceneId": "s02",
+    "l0": {
+      "file": "demo.md",
+      "line": 18
+    }
+  },
+  {
+    "id": 18,
+    "h": "demo0018",
+    "section": "视觉规范 · 深色与光效",
+    "group": "视觉规范",
+    "sceneKey": "demo::3",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "core",
+    "title": "演示条目 18",
+    "text": "深色底、青绿主色、低饱和辅色，高亮只留给真正重要的信息。",
+    "date": "2026-11-06",
+    "heat": 0.93,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "视觉规范"
+    ],
+    "sceneId": "s03",
+    "l0": {
+      "file": "demo.md",
+      "line": 19
+    }
+  },
+  {
+    "id": 19,
+    "h": "demo0019",
+    "section": "视觉规范 · 深色与光效",
+    "group": "视觉规范",
+    "sceneKey": "demo::3",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "core",
+    "title": "演示条目 19",
+    "text": "光效使用加法混合与径向渐变贴图，避免重型后处理带来的黑帧风险。",
+    "date": "2026-11-06",
+    "heat": 0.89,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "视觉规范"
+    ],
+    "sceneId": "s03",
+    "l0": {
+      "file": "demo.md",
+      "line": 20
+    }
+  },
+  {
+    "id": 20,
+    "h": "demo0020",
+    "section": "视觉规范 · 深色与光效",
+    "group": "视觉规范",
+    "sceneKey": "demo::3",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 20",
+    "text": "主视觉由星野、星云、核心、吸积盘、星环五层组成，层次清楚。",
+    "date": "2026-11-06",
+    "heat": 0.77,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "视觉规范"
+    ],
+    "sceneId": "s03",
+    "l0": {
+      "file": "demo.md",
+      "line": 21
+    }
+  },
+  {
+    "id": 21,
+    "h": "demo0021",
+    "section": "视觉规范 · 深色与光效",
+    "group": "视觉规范",
+    "sceneKey": "demo::3",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "core",
+    "title": "演示条目 21",
+    "text": "文字标签保持小而清晰，重要节点用亮度和尺寸区分，不靠花哨字体。",
+    "date": "2026-11-06",
+    "heat": 0.84,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "视觉规范"
+    ],
+    "sceneId": "s03",
+    "l0": {
+      "file": "demo.md",
+      "line": 22
+    }
+  },
+  {
+    "id": 22,
+    "h": "demo0022",
+    "section": "视觉规范 · 深色与光效",
+    "group": "视觉规范",
+    "sceneKey": "demo::3",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 22",
+    "text": "颜色映射固定：偏好暖色、经历青色、事实蓝色、自我紫色、反思红色。",
+    "date": "2026-11-06",
+    "heat": 0.66,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "视觉规范"
+    ],
+    "sceneId": "s03",
+    "l0": {
+      "file": "demo.md",
+      "line": 23
+    }
+  },
+  {
+    "id": 23,
+    "h": "demo0023",
+    "section": "视觉规范 · 深色与光效",
+    "group": "视觉规范",
+    "sceneKey": "demo::3",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "normal",
+    "title": "演示条目 23",
+    "text": "动效节奏以“呼吸感”为主，避免所有元素同时高速运动。",
+    "date": "2026-11-06",
+    "heat": 0.79,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "视觉规范"
+    ],
+    "sceneId": "s03",
+    "l0": {
+      "file": "demo.md",
+      "line": 24
+    }
+  },
+  {
+    "id": 24,
+    "h": "demo0024",
+    "section": "交互设计 · 可读优先",
+    "group": "交互设计",
+    "sceneKey": "demo::4",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "core",
+    "title": "演示条目 24",
+    "text": "悬停只做轻量反馈，点击才展开完整信息，减少界面噪音。",
+    "date": "2026-11-06",
+    "heat": 0.87,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "交互设计"
+    ],
+    "sceneId": "s04",
+    "l0": {
+      "file": "demo.md",
+      "line": 25
+    }
+  },
+  {
+    "id": 25,
+    "h": "demo0025",
+    "section": "交互设计 · 可读优先",
+    "group": "交互设计",
+    "sceneKey": "demo::4",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 25",
+    "text": "详情卡打开时隐藏悬停浮层，避免两层信息互相遮挡。",
+    "date": "2026-11-06",
+    "heat": 0.75,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "交互设计"
+    ],
+    "sceneId": "s04",
+    "l0": {
+      "file": "demo.md",
+      "line": 26
+    }
+  },
+  {
+    "id": 26,
+    "h": "demo0026",
+    "section": "交互设计 · 可读优先",
+    "group": "交互设计",
+    "sceneKey": "demo::4",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "core",
+    "title": "演示条目 26",
+    "text": "提供键盘快捷键：1/2/3 切形态，H 影院模式，R 刷新。",
+    "date": "2026-11-06",
+    "heat": 0.82,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "交互设计"
+    ],
+    "sceneId": "s04",
+    "l0": {
+      "file": "demo.md",
+      "line": 27
+    }
+  },
+  {
+    "id": 27,
+    "h": "demo0027",
+    "section": "交互设计 · 可读优先",
+    "group": "交互设计",
+    "sceneKey": "demo::4",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "reflection",
+    "tier": "core",
+    "title": "演示条目 27",
+    "text": "交互的第一目标是让用户知道“现在看到的是什么”，其次才是惊喜。",
+    "date": "2026-11-06",
+    "heat": 0.91,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "交互设计"
+    ],
+    "sceneId": "s04",
+    "l0": {
+      "file": "demo.md",
+      "line": 28
+    }
+  },
+  {
+    "id": 28,
+    "h": "demo0028",
+    "section": "交互设计 · 可读优先",
+    "group": "交互设计",
+    "sceneKey": "demo::4",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 28",
+    "text": "分区聚焦时其余元素降到低透明度，而不是直接消失，保留空间感。",
+    "date": "2026-11-06",
+    "heat": 0.63,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "交互设计"
+    ],
+    "sceneId": "s04",
+    "l0": {
+      "file": "demo.md",
+      "line": 29
+    }
+  },
+  {
+    "id": 29,
+    "h": "demo0029",
+    "section": "验证方法 · 自动化验收",
+    "group": "验证方法",
+    "sceneKey": "demo::5",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "core",
+    "title": "演示条目 29",
+    "text": "用 Playwright 无头浏览器加载页面，检查 WebGL、控制台、溢出与关键交互。",
+    "date": "2026-11-06",
+    "heat": 0.9,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "验证方法"
+    ],
+    "sceneId": "s05",
+    "l0": {
+      "file": "demo.md",
+      "line": 30
+    }
+  },
+  {
+    "id": 30,
+    "h": "demo0030",
+    "section": "验证方法 · 自动化验收",
+    "group": "验证方法",
+    "sceneKey": "demo::5",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 30",
+    "text": "软件渲染环境需要 SwiftShader 参数，否则 WebGL 可能直接黑屏。",
+    "date": "2026-11-06",
+    "heat": 0.78,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "验证方法"
+    ],
+    "sceneId": "s05",
+    "l0": {
+      "file": "demo.md",
+      "line": 31
+    }
+  },
+  {
+    "id": 31,
+    "h": "demo0031",
+    "section": "验证方法 · 自动化验收",
+    "group": "验证方法",
+    "sceneKey": "demo::5",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 31",
+    "text": "截图验收覆盖 1600×900 与 1366×768 两种窗口，确认没有横向滚动。",
+    "date": "2026-11-06",
+    "heat": 0.73,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "验证方法"
+    ],
+    "sceneId": "s05",
+    "l0": {
+      "file": "demo.md",
+      "line": 32
+    }
+  },
+  {
+    "id": 32,
+    "h": "demo0032",
+    "section": "验证方法 · 自动化验收",
+    "group": "验证方法",
+    "sceneKey": "demo::5",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 32",
+    "text": "测试结果写入表格：数据量、WebGL 版本、报错数、溢出、交互状态。",
+    "date": "2026-11-06",
+    "heat": 0.69,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "验证方法"
+    ],
+    "sceneId": "s05",
+    "l0": {
+      "file": "demo.md",
+      "line": 33
+    }
+  },
+  {
+    "id": 33,
+    "h": "demo0033",
+    "section": "验证方法 · 自动化验收",
+    "group": "验证方法",
+    "sceneKey": "demo::5",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "core",
+    "title": "演示条目 33",
+    "text": "修复一个问题后重跑整套检查，避免修好 A 弄坏 B。",
+    "date": "2026-11-06",
+    "heat": 0.81,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": true,
+    "tags": [
+      "演示数据",
+      "验证方法"
+    ],
+    "sceneId": "s05",
+    "l0": {
+      "file": "demo.md",
+      "line": 34
+    }
+  },
+  {
+    "id": 34,
+    "h": "demo0034",
+    "section": "数据接口 · 只读快照",
+    "group": "数据接口",
+    "sceneKey": "demo::6",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "core",
+    "title": "演示条目 34",
+    "text": "快照接口只读，返回 counts、nodes、edges、memories、matrix、waveform 与 system。",
+    "date": "2026-11-06",
+    "heat": 0.85,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "数据接口"
+    ],
+    "sceneId": "s06",
+    "l0": {
+      "file": "demo.md",
+      "line": 35
+    }
+  },
+  {
+    "id": 35,
+    "h": "demo0035",
+    "section": "数据接口 · 只读快照",
+    "group": "数据接口",
+    "sceneKey": "demo::6",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 35",
+    "text": "记忆正文只截取前 96 个字符，详情面板按需展示，减少单次传输体积。",
+    "date": "2026-11-06",
+    "heat": 0.7,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "数据接口"
+    ],
+    "sceneId": "s06",
+    "l0": {
+      "file": "demo.md",
+      "line": 36
+    }
+  },
+  {
+    "id": 36,
+    "h": "demo0036",
+    "section": "数据接口 · 只读快照",
+    "group": "数据接口",
+    "sceneKey": "demo::6",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 36",
+    "text": "数据按文件修改时间缓存，文件没变就不重复解析 JSON。",
+    "date": "2026-11-06",
+    "heat": 0.67,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "数据接口"
+    ],
+    "sceneId": "s06",
+    "l0": {
+      "file": "demo.md",
+      "line": 37
+    }
+  },
+  {
+    "id": 37,
+    "h": "demo0037",
+    "section": "数据接口 · 只读快照",
+    "group": "数据接口",
+    "sceneKey": "demo::6",
+    "layer7": "project",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 37",
+    "text": "前端每 3 秒轮询一次快照，断线显示 OFFLINE，恢复后自动重建场景。",
+    "date": "2026-11-06",
+    "heat": 0.59,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "数据接口"
+    ],
+    "sceneId": "s06",
+    "l0": {
+      "file": "demo.md",
+      "line": 38
+    }
+  },
+  {
+    "id": 38,
+    "h": "demo0038",
+    "section": "工作流规则 · 先诊断再重试",
+    "group": "工作流规则",
+    "sceneKey": "demo::7",
+    "layer7": "rules",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "core",
+    "title": "演示条目 38",
+    "text": "工具调用失败两次后停下来换策略，先诊断根因再继续。",
+    "date": "2026-11-06",
+    "heat": 0.88,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工作流规则"
+    ],
+    "sceneId": "s07",
+    "l0": {
+      "file": "demo.md",
+      "line": 39
+    }
+  },
+  {
+    "id": 39,
+    "h": "demo0039",
+    "section": "工作流规则 · 先诊断再重试",
+    "group": "工作流规则",
+    "sceneKey": "demo::7",
+    "layer7": "rules",
+    "layer7Name": "演示数据",
+    "layer": "self",
+    "tier": "core",
+    "title": "演示条目 39",
+    "text": "执行任务时优先交付可运行成品，方案必须落到文件和验证上。",
+    "date": "2026-11-06",
+    "heat": 0.92,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工作流规则"
+    ],
+    "sceneId": "s07",
+    "l0": {
+      "file": "demo.md",
+      "line": 40
+    }
+  },
+  {
+    "id": 40,
+    "h": "demo0040",
+    "section": "工作流规则 · 先诊断再重试",
+    "group": "工作流规则",
+    "sceneKey": "demo::7",
+    "layer7": "rules",
+    "layer7Name": "演示数据",
+    "layer": "preference",
+    "tier": "core",
+    "title": "演示条目 40",
+    "text": "修改已有文件前先读上下文，只做最小必要变更。",
+    "date": "2026-11-06",
+    "heat": 0.86,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工作流规则"
+    ],
+    "sceneId": "s07",
+    "l0": {
+      "file": "demo.md",
+      "line": 41
+    }
+  },
+  {
+    "id": 41,
+    "h": "demo0041",
+    "section": "工作流规则 · 先诊断再重试",
+    "group": "工作流规则",
+    "sceneKey": "demo::7",
+    "layer7": "rules",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 41",
+    "text": "危险操作先确认，删除优先进回收站，不直接彻底删除。",
+    "date": "2026-11-06",
+    "heat": 0.77,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工作流规则"
+    ],
+    "sceneId": "s07",
+    "l0": {
+      "file": "demo.md",
+      "line": 42
+    }
+  },
+  {
+    "id": 42,
+    "h": "demo0042",
+    "section": "工作流规则 · 先诊断再重试",
+    "group": "工作流规则",
+    "sceneKey": "demo::7",
+    "layer7": "rules",
+    "layer7Name": "演示数据",
+    "layer": "self",
+    "tier": "core",
+    "title": "演示条目 42",
+    "text": "遇到不确定的信息要明确说出来，不编造结果。",
+    "date": "2026-11-06",
+    "heat": 0.9,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工作流规则"
+    ],
+    "sceneId": "s07",
+    "l0": {
+      "file": "demo.md",
+      "line": 43
+    }
+  },
+  {
+    "id": 43,
+    "h": "demo0043",
+    "section": "工作流规则 · 先诊断再重试",
+    "group": "工作流规则",
+    "sceneKey": "demo::7",
+    "layer7": "rules",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 43",
+    "text": "公开资产与私人记录严格分层，公开包发布前必须跑隐私扫描。",
+    "date": "2026-11-06",
+    "heat": 0.71,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "工作流规则"
+    ],
+    "sceneId": "s07",
+    "l0": {
+      "file": "demo.md",
+      "line": 44
+    }
+  },
+  {
+    "id": 44,
+    "h": "demo0044",
+    "section": "复盘记录 · 踩坑与修正",
+    "group": "复盘记录",
+    "sceneKey": "demo::8",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "core",
+    "title": "演示条目 44",
+    "text": "脉冲 Sprite 未清理导致重建后不断累积，修复方式是在构建入口清空数组。",
+    "date": "2026-11-06",
+    "heat": 0.84,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "复盘记录"
+    ],
+    "sceneId": "s08",
+    "l0": {
+      "file": "demo.md",
+      "line": 45
+    }
+  },
+  {
+    "id": 45,
+    "h": "demo0045",
+    "section": "复盘记录 · 踩坑与修正",
+    "group": "复盘记录",
+    "sceneKey": "demo::8",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 45",
+    "text": "悬停缩放基准被重复放大，修复方式是构建时保存 baseScaleVec。",
+    "date": "2026-11-06",
+    "heat": 0.79,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "复盘记录"
+    ],
+    "sceneId": "s08",
+    "l0": {
+      "file": "demo.md",
+      "line": 46
+    }
+  },
+  {
+    "id": 46,
+    "h": "demo0046",
+    "section": "复盘记录 · 踩坑与修正",
+    "group": "复盘记录",
+    "sceneKey": "demo::8",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "fact",
+    "tier": "normal",
+    "title": "演示条目 46",
+    "text": "面板重绘依赖时间取整会在低帧率下失灵，改为 120ms 累加器。",
+    "date": "2026-11-06",
+    "heat": 0.62,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "复盘记录"
+    ],
+    "sceneId": "s08",
+    "l0": {
+      "file": "demo.md",
+      "line": 47
+    }
+  },
+  {
+    "id": 47,
+    "h": "demo0047",
+    "section": "复盘记录 · 踩坑与修正",
+    "group": "复盘记录",
+    "sceneKey": "demo::8",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "episode",
+    "tier": "normal",
+    "title": "演示条目 47",
+    "text": "后期泛光在部分环境出现黑帧，改用加法混合光晕精灵替代。",
+    "date": "2026-11-06",
+    "heat": 0.76,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "复盘记录"
+    ],
+    "sceneId": "s08",
+    "l0": {
+      "file": "demo.md",
+      "line": 48
+    }
+  },
+  {
+    "id": 48,
+    "h": "demo0048",
+    "section": "复盘记录 · 踩坑与修正",
+    "group": "复盘记录",
+    "sceneKey": "demo::8",
+    "layer7": "lesson",
+    "layer7Name": "演示数据",
+    "layer": "self",
+    "tier": "core",
+    "title": "演示条目 48",
+    "text": "复盘要写清“现象、根因、修复、验证”，只写结论没有复用价值。",
+    "date": "2026-11-06",
+    "heat": 0.83,
+    "hits": 0,
+    "conf": "observed",
+    "stage": 0,
+    "reviewAt": "2026-12-06T00:00:00.000Z",
+    "recalls": 0,
+    "dead": false,
+    "tags": [
+      "演示数据",
+      "复盘记录"
+    ],
+    "sceneId": "s08",
+    "l0": {
+      "file": "demo.md",
+      "line": 49
+    }
+  }
+]

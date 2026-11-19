@@ -1,0 +1,81 @@
+{
+  "builtAt": "2026-11-06 12:00:00",
+  "graphHash": "d3m05c0a91e2b7",
+  "renderRevision": "demo-2026-11-06",
+  "counts": {
+    "nodes": 8,
+    "edges": 16,
+    "memories": 48,
+    "L1": 48,
+    "L2": 8,
+    "L3": 2,
+    "dead": 1
+  },
+  "layerCount": {
+    "project": 32,
+    "lesson": 10,
+    "rules": 6
+  },
+  "kindCount": {
+    "episode": 21,
+    "fact": 15,
+    "preference": 8,
+    "reflection": 1,
+    "self": 3
+  },
+  "layerNames": {
+    "rules": "规则与契约",
+    "project": "项目与基建",
+    "lesson": "复盘与教训",
+    "topic": "话题与待办",
+    "fact": "原子事实"
+  },
+  "source": {
+    "memoryFile": "demo.md",
+    "schema": "asset-pack-demo-v1",
+    "sourceSize": "4096",
+    "sourceSha": "demo"
+  },
+  "topSections": [
+    {
+      "name": "项目节奏",
+      "count": 9,
+      "layer7": "project"
+    },
+    {
+      "name": "工具链",
+      "count": 8,
+      "layer7": "project"
+    },
+    {
+      "name": "视觉规范",
+      "count": 6,
+      "layer7": "project"
+    },
+    {
+      "name": "交互设计",
+      "count": 5,
+      "layer7": "project"
+    },
+    {
+      "name": "验证方法",
+      "count": 5,
+      "layer7": "lesson"
+    },
+    {
+      "name": "数据接口",
+      "count": 4,
+      "layer7": "project"
+    },
+    {
+      "name": "工作流规则",
+      "count": 6,
+      "layer7": "rules"
+    },
+    {
+      "name": "复盘记录",
+      "count": 5,
+      "layer7": "lesson"
+    }
+  ]
+}

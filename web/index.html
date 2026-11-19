@@ -1,0 +1,2223 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='26' fill='%23040a0c'/%3E%3Ccircle cx='32' cy='32' r='19' fill='none' stroke='%2346ffcd' stroke-width='2'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23eafff8'/%3E%3C/svg%3E" />
+<title>星炬观测站 · 记忆皮层 3D</title>
+<style>
+  :root{
+    /* 三级背景 + 三级文字，照 lumen-gallery 那套设计系统搬过来的。
+       原来只有一级背景、两级文字，所有东西浮在同一层，所以怎么调都平。 */
+    --bg0:#070B14;      /* 最深层 */
+    --bg1:#0B1120;      /* 卡片底 */
+    --bg2:#111A2E;      /* 悬浮层 */
+    --line-solid:#1E2A44;
+
+    --bg:#070B14;
+    --ink:#E8F1FF;
+    --text-hi:#E8F1FF;
+    --text-mid:#9DB0D0;
+    --text-low:#5C6B8A;
+    --dim:rgba(157,176,208,.56);
+    /* 描边从 15% 透明提到 55%：原来淡到几乎看不见，面板没有边界感 */
+    --faint:rgba(30,42,68,.55);
+    --line:rgba(30,42,68,.55);
+    --accent:#22D3EE;
+    --accent2:#A78BFA;
+    --warn:#FBBF24;
+    --bad:#F472B6;
+    --ok:#34D399;
+    --mono:"Cascadia Mono","Consolas","SFMono-Regular","Microsoft YaHei",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--mono)}
+  body{user-select:none}
+  #gl,#fx{position:fixed;inset:0;display:block}
+  #fx{pointer-events:none;z-index:2}
+  /* 暗角：这一层原来写着 mix-blend-mode:screen —— 黑色在 screen 混合下等于透明，
+     于是那个径向暗角从上线起就没生效过，屏幕上只剩一条横纹在发光。
+     改回正常混合，外围才真的沉下去，视线才回得来。 */
+  .vignette{position:fixed;inset:0;pointer-events:none;z-index:2;
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 30%, rgba(0,4,7,.58) 76%, rgba(0,2,4,.95) 100%)}
+  /* 横纹单独一层：青绿细线要靠 screen 叠才亮，跟暗角不能混在一起 */
+  .scanlines{position:fixed;inset:0;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(0deg, rgba(120,255,220,.024) 0 1px, transparent 1px 3px);
+    mix-blend-mode:screen}
+  .grain{position:fixed;inset:0;pointer-events:none;opacity:.14;z-index:2;
+    background-image:radial-gradient(rgba(180,255,235,.5) .5px, transparent .6px);
+    background-size:3px 3px;mix-blend-mode:overlay}
+  .scan{position:fixed;left:0;right:0;height:1px;top:0;z-index:3;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(90,255,215,.55),transparent);opacity:.35;
+    animation:scan 7s linear infinite}
+  @keyframes scan{0%{transform:translateY(60px)}100%{transform:translateY(100vh)}}
+  .sweep{position:fixed;left:50%;top:50%;width:130vmax;height:130vmax;margin:-65vmax 0 0 -65vmax;
+    z-index:1;pointer-events:none;opacity:.34;mix-blend-mode:screen;
+    background:conic-gradient(from 0deg, rgba(52,211,153,.20), rgba(52,211,153,.02) 12%, transparent 26%, transparent 100%);
+    animation:sweep 18s linear infinite;
+    -webkit-mask-image:radial-gradient(circle, rgba(0,0,0,.9) 0%, rgba(0,0,0,.55) 38%, transparent 72%);
+    mask-image:radial-gradient(circle, rgba(0,0,0,.9) 0%, rgba(0,0,0,.55) 38%, transparent 72%)}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+
+  header{position:fixed;top:0;left:0;right:0;height:54px;display:flex;align-items:center;gap:24px;
+    padding:0 24px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(4,14,16,.9), rgba(3,9,12,.35));z-index:6}
+  .brand{display:flex;align-items:center;gap:12px;font-size:13px;letter-spacing:.22em;white-space:nowrap}
+  .brand .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 10px var(--accent),0 0 26px rgba(52,211,153,.6);animation:pulse 2.4s ease-in-out infinite}
+  .brand .slash{color:var(--faint)}
+  .brand small{font-size:9px;letter-spacing:.18em;color:var(--dim);margin-left:8px}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.78)}}
+  .tabs{display:flex;gap:8px;margin-left:12px}
+  .tabs button,.ghost{background:transparent;border:1px solid transparent;color:var(--dim);
+    font-family:var(--mono);font-size:9px;letter-spacing:.16em;padding:8px 12px;cursor:pointer;transition:.2s}
+  .tabs button:hover,.ghost:hover{color:var(--ink);border-color:var(--faint)}
+  .tabs button.on{color:#070B14;background:var(--accent);border-color:var(--accent);
+    box-shadow:0 0 20px rgba(52,211,153,.4)}
+  .ghost{border:1px solid var(--faint);margin-left:8px}
+  .status{margin-left:auto;display:flex;align-items:center;gap:20px;font-size:9px;letter-spacing:.12em;color:var(--dim);white-space:nowrap}
+  .status b{color:var(--ink);font-weight:400}
+  .status .live{display:flex;align-items:center;gap:8px}
+  .status .live i{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .status .live.off i{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+  .status .live.off b{color:var(--bad)}
+
+  /* 左栏改成卡片式：原来是「一根竖线 + 贴着的数字」，那是仪表盘的做法。
+     卡片 + 暖白数值 + 青金渐变条，才是这套自己的味道。 */
+  .rail{position:fixed;left:22px;top:80px;width:186px;z-index:4;display:flex;flex-direction:column;gap:8px;transition:.3s}
+  .rail .block{
+    padding:8px 12px 8px;border-radius:10px;
+    background:linear-gradient(118deg, rgba(9,11,22,.78), rgba(9,11,22,.30) 72%, rgba(9,11,22,0));
+    border:1px solid rgba(30,42,68,.10);
+    border-left:2px solid rgba(34,211,238,.45);
+  }
+  .rail .k{font-size:11px;letter-spacing:.04em;color:rgba(157,176,208,.62)}
+  .rail .v{
+    font-size:24px;line-height:1;margin-top:4px;color:#E8F1FF;
+    text-shadow:0 0 18px rgba(251,191,36,.40), 0 0 5px rgba(255,255,255,.55);
+  }
+  .rail .v em{font-style:normal;font-size:9px;color:rgba(251,191,36,.60);margin-left:4px}
+  .rail .bar{height:2px;background:rgba(251,191,36,.10);margin-top:8px;overflow:hidden;border-radius:1px}
+  .rail .bar i{
+    display:block;height:100%;width:0;transition:width .8s;
+    background:linear-gradient(90deg,var(--accent),var(--warn));
+    box-shadow:0 0 10px rgba(251,191,36,.65);
+  }
+  .rail .sub{font-size:9px;color:rgba(157,176,208,.38);margin-top:4px;letter-spacing:.02em}
+
+  .right-rail{position:fixed;right:22px;top:80px;width:210px;z-index:4;transition:.3s}
+  .rr-title{font-size:11px;letter-spacing:.04em;color:rgba(251,191,36,.72);margin:0 0 8px;display:flex;justify-content:space-between}
+  .rr-title span{color:rgba(251,191,36,.50)}
+  .part{display:flex;align-items:center;gap:8px;font-size:9px;line-height:1.2;padding:4px 8px;cursor:pointer;
+    color:rgba(157,176,208,.62);border-bottom:1px solid rgba(30,42,68,.06);transition:.18s}
+  .part:hover{color:#E8F1FF;background:rgba(251,191,36,.07)}
+  .part.on{color:#E8F1FF;background:linear-gradient(90deg,rgba(251,191,36,.16),transparent);border-left:2px solid var(--warn);padding-left:4px}
+  .part .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .part .c{color:rgba(251,191,36,.85);font-size:9px}
+  .part .bar{width:34px;height:2px;background:rgba(251,191,36,.12)}
+  .part .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--warn));box-shadow:0 0 6px rgba(251,191,36,.7)}
+  .legend{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:9px;letter-spacing:.06em;padding:4px 8px;
+    border:1px solid rgba(52,211,153,.18);color:rgba(232,241,255,.75);cursor:pointer;transition:.18s;background:rgba(4,14,16,.5)}
+  .chip i{width:5px;height:5px;border-radius:50%;background:currentColor;box-shadow:0 0 7px currentColor}
+  .chip.off{opacity:.28;filter:grayscale(1)}
+  .chip:hover{border-color:rgba(52,211,153,.5)}
+
+  .hint{position:fixed;left:22px;bottom:208px;z-index:4;font-size:9px;line-height:1.9;
+    color:rgba(232,241,255,.42);letter-spacing:.06em;transition:.3s}
+  .hint kbd{font-family:var(--mono);color:var(--accent);border:1px solid var(--faint);padding:0 4px;border-radius:2px}
+
+  .dock{position:fixed;left:0;right:0;bottom:0;height:188px;z-index:5;display:grid;
+    grid-template-columns:1.45fr 1fr 1.05fr 1fr 1.08fr;gap:1px;
+    background:var(--line);border-top:1px solid rgba(52,211,153,.24);transition:.3s}
+  .panel{background:linear-gradient(180deg, rgba(9,7,18,.92), rgba(4,3,10,.96));padding:8px 12px 8px;position:relative;overflow:hidden;min-width:0}
+  .panel::before,.panel::after{content:"";position:absolute;width:9px;height:9px;border-color:rgba(251,191,36,.38);border-style:solid;pointer-events:none}
+  .panel::before{left:4px;top:4px;border-width:1px 0 0 1px}
+  .panel::after{right:4px;bottom:4px;border-width:0 1px 1px 0}
+  .ph{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;letter-spacing:.04em;color:rgba(210,232,255,.74);margin-bottom:8px;white-space:nowrap}
+  .ph span:first-child{overflow:hidden;text-overflow:ellipsis}
+  .ph span:last-child{color:rgba(251,191,36,.48);letter-spacing:.04em;flex:0 0 auto}
+  .panel canvas{display:block;width:100%;height:calc(100% - 22px)}
+  .log{height:calc(100% - 22px);overflow:hidden;font-size:11px;line-height:1.6;color:rgba(232,241,255,.74)}
+  .log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .log .t{color:rgba(120,220,200,.34);margin-right:8px}
+  .log .ok{color:#34D399}
+  .log .dim{color:rgba(160,220,210,.46)}
+  .log .warn{color:var(--warn)}
+  .log .bad{color:var(--bad)}
+
+  .tooltip{position:fixed;z-index:9;pointer-events:none;max-width:300px;padding:8px 8px;
+    background:rgba(3,14,15,.92);border:1px solid rgba(52,211,153,.35);font-size:11px;line-height:1.55;
+    color:#E8F1FF;box-shadow:0 0 24px rgba(20,180,150,.25);display:none}
+  .tooltip .k{font-size:9px;letter-spacing:.15em;color:var(--accent);margin-bottom:4px}
+
+  .detail{position:fixed;right:22px;bottom:208px;width:330px;z-index:7;padding:12px 16px;
+    background:linear-gradient(180deg, rgba(5,18,18,.94), rgba(3,10,12,.96));
+    border:1px solid rgba(52,211,153,.32);box-shadow:0 0 40px rgba(10,120,100,.25);
+    transform:translateY(12px);opacity:0;pointer-events:none;transition:.25s}
+  .detail.show{transform:none;opacity:1;pointer-events:auto}
+  .detail .d-top{display:flex;justify-content:space-between;align-items:center;font-size:9px;letter-spacing:.18em;color:var(--dim);margin-bottom:8px}
+  .detail .d-kind{color:var(--accent)}
+  .detail .d-text{font-size:11px;line-height:1.75;color:#E8F1FF;max-height:140px;overflow:auto}
+  .detail .d-meta{margin-top:12px;font-size:9px;color:rgba(232,241,255,.5);letter-spacing:.06em}
+  .detail .d-close{cursor:pointer;color:var(--dim);font-size:13px;line-height:1}
+  .detail .d-close:hover{color:var(--ink)}
+
+  body.cinema header,body.cinema .rail,body.cinema .right-rail,body.cinema .dock,body.cinema .hint,body.cinema .detail{opacity:0;pointer-events:none}
+  body.cinema .dock{transform:translateY(100%)}
+  body.cinema .rail{transform:translateX(-30px)}
+  body.cinema .right-rail{transform:translateX(30px)}
+
+  @media (max-width:1280px){
+    .right-rail,.detail{display:none}
+  }
+  @media (max-width:1100px){
+    .rail{display:none}
+    .hint{display:none}
+    .dock{grid-template-columns:1.4fr 1fr 1fr 1fr;height:168px}
+    .panel.wave{display:none}
+    .status .hide-sm{display:none}
+  }
+  @media (max-width:760px){
+    header{gap:12px;padding:0 12px}
+    .brand{font-size:11px;letter-spacing:.14em}
+    .brand small,.tabs{display:none}
+    .ghost{display:none}
+    .status{gap:12px}
+    .dock{grid-template-columns:1fr 1fr;height:150px}
+    .panel.log-panel{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="fx"></canvas>
+<div class="vignette"></div>
+<div class="scanlines"></div>
+<div class="grain"></div>
+<div class="sweep"></div>
+<div class="scan"></div>
+
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <span>星炬观测站</span><span class="slash">/</span><span>记忆皮层</span>
+    <small>STARFORGE · 3D</small>
+  </div>
+  <div class="tabs">
+    <button data-mode="0" class="on">星团</button>
+    <button data-mode="1">隧道</button>
+    <button data-mode="2">关系网</button>
+  </div>
+  <button class="ghost" id="cinema">全屏</button>
+  <div class="status">
+    <span class="hide-sm">原子 <b id="s-atoms">--</b></span>
+    <span class="hide-sm">CPU <b id="s-cpu">--</b></span>
+    <span class="hide-sm">FPS <b id="s-fps">--</b></span>
+    <span class="live" id="live"><i></i><b id="s-link">连接</b></span>
+    <span><b id="s-clock">--:--:--</b></span>
+  </div>
+</header>
+
+<aside class="rail">
+  <div class="block">
+    <div class="k">记忆原子 · ATOMS</div>
+    <div class="v" id="m-atoms">--</div>
+    <div class="bar"><i id="b-atoms"></i></div>
+    <div class="sub">L1 原子事实</div>
+  </div>
+  <div class="block">
+    <div class="k">场景层 · LAYERS</div>
+    <div class="v"><span id="m-scenes">--</span><em>L2</em></div>
+    <div class="bar"><i id="b-scenes"></i></div>
+    <div class="sub">场景 / 主题簇</div>
+  </div>
+  <div class="block">
+    <div class="k">人格单元 · PERSONA</div>
+    <div class="v"><span id="m-persona">--</span><em>L3</em></div>
+    <div class="bar"><i id="b-persona"></i></div>
+    <div class="sub">画像结论</div>
+  </div>
+  <div class="block">
+    <div class="k">分区 · PARTITIONS</div>
+    <div class="v" id="m-nodes">--</div>
+    <div class="bar"><i id="b-nodes"></i></div>
+    <div class="sub"><span id="m-edges">--</span> 条连接 · <span id="m-dead">--</span> 失效</div>
+  </div>
+  <div class="block">
+    <div class="k">图谱指纹 · HASH</div>
+    <div class="v" style="font-size:13px;letter-spacing:.04em" id="m-hash">--</div>
+    <div class="sub" id="m-built">--</div>
+  </div>
+</aside>
+
+<aside class="right-rail">
+  <div class="rr-title"><span>分区索引</span><span id="rr-focus">全部</span></div>
+  <div id="partitions"></div>
+  <div class="rr-title" style="margin-top:14px"><span>信号分类</span><span>点击筛选</span></div>
+  <div class="legend" id="legend"></div>
+</aside>
+
+<div class="hint">
+  <kbd>拖拽</kbd> 旋转 · <kbd>滚轮</kbd> 缩放 · <kbd>双击</kbd> 复位<br>
+  <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 形态 · <kbd>H</kbd> 影院 · <kbd>R</kbd> 刷新 · 点击光点看记忆
+</div>
+
+<div class="tooltip" id="tooltip"><div class="k" id="tt-kind"></div><div id="tt-text"></div></div>
+
+<aside class="detail" id="detail">
+  <div class="d-top"><span class="d-kind" id="d-kind">记忆</span><span class="d-close" id="d-close">✕</span></div>
+  <div class="d-text" id="d-text"></div>
+  <div class="d-meta" id="d-meta"></div>
+</aside>
+
+<footer class="dock">
+  <section class="panel log-panel">
+    <div class="ph"><span>事件流 · EVENT</span><span id="log-seq">--</span></div>
+    <div class="log" id="log"></div>
+  </section>
+  <section class="panel">
+    <div class="ph"><span>粒子场 · PARTICLE</span><span>原子</span></div>
+    <canvas id="cv-swarm"></canvas>
+  </section>
+  <section class="panel">
+    <div class="ph"><span>记忆总线 · BUS</span><span>类型</span></div>
+    <canvas id="cv-router"></canvas>
+  </section>
+  <section class="panel wave">
+    <div class="ph"><span>系统脉搏 · PULSE</span><span id="wave-read">--</span></div>
+    <canvas id="cv-wave"></canvas>
+  </section>
+  <section class="panel">
+    <div class="ph"><span>记忆热力 · HEATMAP</span><span>18 × 18</span></div>
+    <canvas id="cv-heat"></canvas>
+  </section>
+</footer>
+
+<script>
+/* 运行时错误兜底：出错时把信息留在 window.__ERR__ 里，方便定位 */
+window.__ERR__ = [];
+addEventListener('error', (e) => {
+  window.__ERR__.push((e.message || '') + ' @' + (e.lineno || 0) + ':' + (e.colno || 0));
+});
+addEventListener('unhandledrejection', (e) => {
+  window.__ERR__.push('reject: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+});
+</script>
+<script type="module">
+import * as THREE from './vendor/three/three.module.js';
+
+const TAU = Math.PI * 2;
+const $ = (id) => document.getElementById(id);
+const KIND_COLOR = {
+  preference: 0xFBBF24,
+  episode: 0x6ef0ff,
+  fact: 0x22D3EE,
+  self: 0xbe9cff,
+  reflection: 0xff8fbf,
+  unknown: 0x8bb8ff,
+};
+const KIND_RGB = {
+  preference: [251,191,36],
+  episode: [110, 240, 255],
+  fact: [34,211,238],
+  self: [190, 156, 255],
+  reflection: [255, 143, 191],
+  unknown: [139, 184, 255],
+};
+const KIND_CN = {
+  preference: '偏好',
+  episode: '经历',
+  fact: '事实',
+  self: '自我',
+  reflection: '反思',
+  unknown: '其他',
+};
+
+/* ───────────── 基础场景 ───────────── */
+const canvas = $('gl');
+const fx = $('fx');
+const fxc = fx.getContext('2d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x04060f, 1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x04060f, 0.0075);
+const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 400);
+const clock = new THREE.Clock();
+
+/* ───────────── 节拍（全场共享一口气） ─────────────
+   原来核心、光晕、星云各有各的正弦频率（1.3 / 2.1 / 1.7 / 2.3 / 0.22），
+   五个频率一辈子碰不到一起，读起来像一堆零件各自呼吸。
+   这里给全场一个包络：一响，所有东西同时抖一下，再一起指数衰减。
+   拍点表故意不均匀，全等间隔就成了节拍器。 */
+const BEAT_PATTERN = [0.5, 0.25, 0.25, 0.5, 0.5, 0.75, 0.25, 0.25, 0.25, 1.0];
+const BEAT_SCALE = 1.55;   // 拍间距放慢：一秒两拍半太急，看着像抽搐；一秒一拍多才像呼吸
+let beatT = 0.6;
+let beatI = 0;
+let beatN = 0;
+let sinceBeat = 9;
+let beatEnv = 0;    // 主拍：核心
+let beatGlow = 0;   // 延迟 80ms：光晕条，波从中心往外推
+let beatHalo = 0;   // 延迟 170ms：星云与外围
+let beatKick = 0;
+function forceBeat() { beatT = 0; }
+function onBeat() {
+  // 每一拍荡一道小冲击环；每四拍压一层 2D 波纹；每八拍炸一发大的
+  triggerShock3D(0.4 + Math.random() * 0.3);
+  if (beatN % 4 === 0) {
+    spawnShock(window.innerWidth * 0.5, window.innerHeight * 0.52, 300);
+  }
+  if (beatN % 8 === 0) triggerShock3D(1.4);
+  // 拍点上必打一道电弧，电跟节奏走，画面才不是各跳各的
+  arcTimer = 0;
+}
+function updateBeat(dt) {
+  beatT -= dt;
+  sinceBeat += dt;
+  if (beatT <= 0) {
+    beatT += BEAT_PATTERN[beatI++ % BEAT_PATTERN.length] * BEAT_SCALE;
+    sinceBeat = 0;
+    beatN += 1;
+    beatKick = 1;
+    onBeat();
+  }
+  beatEnv = Math.exp(-sinceBeat * 3.4);
+  beatGlow = sinceBeat < 0.08 ? 0 : Math.exp(-(sinceBeat - 0.08) * 3.4);
+  beatHalo = sinceBeat < 0.17 ? 0 : Math.exp(-(sinceBeat - 0.17) * 2.8);
+  beatKick = Math.max(0, beatKick - dt * 2.6);
+}
+
+/* ───────────── 纹理 ───────────── */
+function radialTexture() {
+  const size = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  grad.addColorStop(0, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.18, 'rgba(255,255,255,0.92)');
+  grad.addColorStop(0.42, 'rgba(255,255,255,0.32)');
+  grad.addColorStop(0.75, 'rgba(255,255,255,0.06)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const GLOW = radialTexture();
+
+function streakTexture() {
+  const w = 512;
+  const h = 64;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 0, w, 0);
+  grad.addColorStop(0, 'rgba(255,255,255,0)');
+  grad.addColorStop(0.28, 'rgba(190,255,245,0.24)');
+  grad.addColorStop(0.5, 'rgba(255,255,255,1)');
+  grad.addColorStop(0.72, 'rgba(190,255,245,0.24)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, w, h);
+  const vGrad = g.createLinearGradient(0, 0, 0, h);
+  vGrad.addColorStop(0, 'rgba(0,0,0,1)');
+  vGrad.addColorStop(0.42, 'rgba(0,0,0,0)');
+  vGrad.addColorStop(0.58, 'rgba(0,0,0,0)');
+  vGrad.addColorStop(1, 'rgba(0,0,0,1)');
+  g.globalCompositeOperation = 'destination-out';
+  g.fillStyle = vGrad;
+  g.fillRect(0, 0, w, h);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+const STREAK = streakTexture();
+
+function labelTexture(text) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const font = '500 22px "Microsoft YaHei","Cascadia Mono",sans-serif';
+  ctx.font = font;
+  const width = Math.max(64, Math.ceil(ctx.measureText(text).width) + 26);
+  canvas.width = width;
+  canvas.height = 44;
+  const c = canvas.getContext('2d');
+  c.font = font;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillStyle = 'rgba(175,255,235,0.9)';
+  c.shadowColor = 'rgba(52,211,153,0.8)';
+  c.shadowBlur = 10;
+  c.fillText(text, width / 2, 24);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return { tex, aspect: width / 44 };
+}
+
+/* ───────────── 星野 ───────────── */
+const starGeo = new THREE.BufferGeometry();
+const STAR_COUNT = 2400;
+{
+  const pos = new Float32Array(STAR_COUNT * 3);
+  const col = new Float32Array(STAR_COUNT * 3);
+  for (let i = 0; i < STAR_COUNT; i += 1) {
+    const r = 55 + Math.random() * 120;
+    const theta = Math.random() * TAU;
+    const phi = Math.acos(2 * Math.random() - 1);
+    pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i * 3 + 2] = r * Math.cos(phi);
+    const tint = 0.55 + Math.random() * 0.45;
+    col[i * 3] = 0.55 * tint;
+    col[i * 3 + 1] = 1.0 * tint;
+    col[i * 3 + 2] = 0.88 * tint;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  starGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+}
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+  // ★ 必须给圆形贴图。不给的话 Three.js 的 Points 默认画正方形，
+  //   看着就是「飘着一堆小方块」—— 这不是粒子，是网格。
+  size: 0.19, map: GLOW, alphaTest: 0.01,
+  vertexColors: true, transparent: true, opacity: 0.7,
+  blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+}));
+scene.add(stars);
+
+/* ───────────── 星云 ───────────── */
+const nebulae = [];
+const NEBULA_TINTS = [0x0a6a72, 0x1c2f7a, 0x43206b, 0x6b3a1c, 0x0c7a63];
+for (let i = 0; i < 10; i += 1) {
+  const tint = NEBULA_TINTS[i % NEBULA_TINTS.length];
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: GLOW, color: tint, transparent: true, opacity: 0.09 + Math.random() * 0.07,
+    blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false,
+  }));
+  const angle = (i / 10) * TAU + Math.random() * 0.6;
+  const radius = 16 + Math.random() * 26;
+  sprite.position.set(
+    Math.cos(angle) * radius,
+    (Math.random() - 0.5) * 18,
+    Math.sin(angle) * radius
+  );
+  const scale = 26 + Math.random() * 34;
+  sprite.scale.set(scale, scale, 1);
+  sprite.userData.phase = Math.random() * TAU;
+  sprite.userData.baseOpacity = sprite.material.opacity;
+  scene.add(sprite);
+  nebulae.push(sprite);
+}
+
+/* ───────────── 核心 ───────────── */
+const core = new THREE.Group();
+scene.add(core);
+const coreHalo = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: GLOW, color: 0x67E8F9, transparent: true, opacity: 0.5,
+  blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
+}));
+coreHalo.scale.set(3.8, 3.8, 1);
+core.add(coreHalo);
+// 原来这层是纯白 opacity:1，叠在 coreHalo 和白球上 —— 三层相加直接把中心烧成
+// 一片死白，周围的星点和连线全被压没了。0.38 是看着「还是最亮，但旁边能看见东西」的位置。
+const coreHot = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: GLOW, color: 0xffffff, transparent: true, opacity: 0.38,
+  blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
+}));
+coreHot.scale.set(1.15, 1.15, 1);
+core.add(coreHot);
+// 球体从纯白改淡青白：纯白在暗底上会「顶出去」，淡一档更耐看
+const coreBall = new THREE.Mesh(
+  new THREE.SphereGeometry(0.26, 32, 32),
+  new THREE.MeshBasicMaterial({ color: 0xd9f4ff })
+);
+core.add(coreBall);
+
+const rings = [];
+for (let i = 0; i < 4; i += 1) {
+  const radius = 2.4 + i * 1.05;
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(radius, 0.012 + i * 0.004, 6, 220),
+    new THREE.MeshBasicMaterial({
+      color: i % 2 ? 0x22D3EE : 0xA5F3FC, transparent: true,
+      opacity: 0.55 - i * 0.07, blending: THREE.AdditiveBlending, depthWrite: false,
+    })
+  );
+  ring.rotation.x = 0.5 + i * 0.35;
+  ring.rotation.y = i * 0.7;
+  core.add(ring);
+  rings.push(ring);
+}
+
+const flareH = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: STREAK, color: 0x67E8F9, transparent: true, opacity: 0.34,
+  blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false,
+}));
+flareH.scale.set(20, 1.5, 1);
+core.add(flareH);
+const flareV = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: STREAK, color: 0x22D3EE, transparent: true, opacity: 0.22,
+  blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false,
+}));
+flareV.material.rotation = Math.PI / 2;
+flareV.scale.set(11, 0.9, 1);
+core.add(flareV);
+
+const holoShell = new THREE.LineSegments(
+  new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(3.9, 1)),
+  new THREE.LineBasicMaterial({
+    color: 0x22D3EE, transparent: true, opacity: 0.13,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })
+);
+core.add(holoShell);
+
+const holoShell2 = new THREE.LineSegments(
+  new THREE.WireframeGeometry(new THREE.OctahedronGeometry(5.1, 0)),
+  new THREE.LineBasicMaterial({
+    color: 0x22D3EE, transparent: true, opacity: 0.08,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })
+);
+core.add(holoShell2);
+
+/* ───────────── 吸积盘星系粒子 ───────────── */
+const DISK_COUNT = 5000;
+const diskGeo = new THREE.BufferGeometry();
+{
+  const pos = new Float32Array(DISK_COUNT * 3);
+  const col = new Float32Array(DISK_COUNT * 3);
+  const arms = 5;
+  for (let i = 0; i < DISK_COUNT; i += 1) {
+    const radius = 2.6 + Math.pow(Math.random(), 0.62) * 10.5;
+    const arm = i % arms;
+    const spread = (Math.random() - 0.5) * 0.55;
+    const angle = arm * (TAU / arms) + radius * 0.62 + spread;
+    const jitter = (Math.random() - 0.5) * 0.5 * (radius / 10);
+    pos[i * 3] = Math.cos(angle) * radius + jitter;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * (0.22 + radius * 0.055);
+    pos[i * 3 + 2] = Math.sin(angle) * radius + jitter;
+    const warm = Math.random() < 0.08;
+    const brightness = 0.35 + Math.random() * 0.65;
+    col[i * 3] = (warm ? 1.0 : 0.3) * brightness;
+    col[i * 3 + 1] = (warm ? 0.74 : 1.0) * brightness;
+    col[i * 3 + 2] = (warm ? 0.4 : 0.9) * brightness;
+  }
+  diskGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  diskGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+}
+const diskMat = new THREE.PointsMaterial({
+  size: 0.085, map: GLOW, alphaTest: 0.01,
+  vertexColors: true, transparent: true, opacity: 0.72,
+  blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+});
+const disk = new THREE.Points(diskGeo, diskMat);
+disk.rotation.x = 0.06;
+scene.add(disk);
+
+/* ───────────── 冲击波环 ───────────── */
+const shockPool = [];
+for (let i = 0; i < 4; i += 1) {
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(1, 0.006, 5, 200),
+    new THREE.MeshBasicMaterial({
+      color: 0x8fe4ff, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    })
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.userData = { active: false, t: 0 };
+  scene.add(ring);
+  shockPool.push(ring);
+}
+let shockTimer = 0;
+function triggerShock3D(strength = 1) {
+  const ring = shockPool.find((item) => !item.userData.active) || shockPool[0];
+  ring.userData.active = true;
+  ring.userData.t = 0;
+  ring.userData.strength = strength;
+  ring.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.28;
+  ring.rotation.y = Math.random() * TAU;
+}
+function updateShockRings(dt) {
+  shockTimer += dt;
+  if (shockTimer > 7.5) {
+    shockTimer = 0;
+    triggerShock3D(1);
+  }
+  for (const ring of shockPool) {
+    if (!ring.userData.active) continue;
+    ring.userData.t += dt * 0.55;
+    const t = ring.userData.t;
+    if (t >= 1) {
+      ring.userData.active = false;
+      ring.material.opacity = 0;
+      continue;
+    }
+    const scale = 1.5 + t * 8.5 * (ring.userData.strength || 1);
+    ring.scale.setScalar(scale);
+    ring.material.opacity = Math.sin((1 - t) * Math.PI * 0.5) * 0.5;
+  }
+}
+
+/* ───────────── 记忆→核心数据流 ───────────── */
+const STREAM_COUNT = 46;
+const streamSprites = [];
+for (let i = 0; i < STREAM_COUNT; i += 1) {
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: GLOW, color: 0x22D3EE, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  }));
+  sprite.scale.set(0.18, 0.18, 1);
+  sprite.userData = { curve: null, t: -Math.random() * 0.8, speed: 0.3 };
+  scene.add(sprite);
+  streamSprites.push(sprite);
+}
+function resetStream(sprite) {
+  if (!memorySprites.length) {
+    sprite.userData.curve = null;
+    sprite.material.opacity = 0;
+    return;
+  }
+  const source = memorySprites[Math.floor(Math.random() * memorySprites.length)];
+  const from = source.position.clone();
+  const mid = from.clone().multiplyScalar(0.45).add(new THREE.Vector3(
+    (Math.random() - 0.5) * 2.6,
+    (Math.random() - 0.5) * 2.6,
+    (Math.random() - 0.5) * 2.6
+  ));
+  sprite.userData.curve = new THREE.QuadraticBezierCurve3(from, mid, new THREE.Vector3(0, 0, 0));
+  sprite.userData.t = -Math.random() * 1.2;
+  sprite.userData.speed = 0.26 + Math.random() * 0.42;
+  const kind = source.userData.memory?.kind || 'unknown';
+  sprite.material.color.setHex(KIND_COLOR[kind] || KIND_COLOR.unknown);
+}
+function resetStreams() {
+  for (const sprite of streamSprites) resetStream(sprite);
+}
+function updateStreams(dt) {
+  const visibility = [1, 0.12, 0.75][mode];
+  for (const sprite of streamSprites) {
+    if (!sprite.userData.curve) { resetStream(sprite); continue; }
+    sprite.userData.t += dt * sprite.userData.speed;
+    const t = sprite.userData.t;
+    if (t > 1) { resetStream(sprite); continue; }
+    if (t < 0) { sprite.material.opacity = 0; continue; }
+    sprite.position.copy(sprite.userData.curve.getPoint(t));
+    sprite.material.opacity = Math.sin(t * Math.PI) * 0.85 * visibility;
+  }
+}
+
+/* ───────────── 径向光轨 ───────────── */
+const ringLineCount = 1600;
+const ringPositions = new Float32Array(ringLineCount * 2 * 3);
+const ringColors = new Float32Array(ringLineCount * 2 * 3);
+for (let i = 0; i < ringLineCount; i += 1) {
+  const angle = Math.random() * TAU;
+  const r0 = 4.2 + Math.random() * 2.2;
+  const r1 = r0 + 1.2 + Math.pow(Math.random(), 1.7) * 8;
+  const z = (Math.random() - 0.5) * 14;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const p = i * 6;
+  ringPositions[p] = cos * r0;
+  ringPositions[p + 1] = sin * r0;
+  ringPositions[p + 2] = z;
+  ringPositions[p + 3] = cos * r1;
+  ringPositions[p + 4] = sin * r1;
+  ringPositions[p + 5] = z + (Math.random() - 0.5) * 0.4;
+  const bright = 0.25 + Math.random() * 0.75;
+  ringColors[p] = 0.35 * bright;
+  ringColors[p + 1] = 1.0 * bright;
+  ringColors[p + 2] = 0.82 * bright;
+  ringColors[p + 3] = 0.35 * bright;
+  ringColors[p + 4] = 1.0 * bright;
+  ringColors[p + 5] = 0.82 * bright;
+}
+const ringGeo = new THREE.BufferGeometry();
+ringGeo.setAttribute('position', new THREE.BufferAttribute(ringPositions, 3));
+ringGeo.setAttribute('color', new THREE.BufferAttribute(ringColors, 3));
+const ringMat = new THREE.LineBasicMaterial({
+  vertexColors: true, transparent: true, opacity: 0.5,
+  blending: THREE.AdditiveBlending, depthWrite: false,
+});
+const ringLines = new THREE.LineSegments(ringGeo, ringMat);
+scene.add(ringLines);
+
+/* ───────────── 曲速光流 ───────────── */
+const WARP_COUNT = 8000;
+const warpPos = new Float32Array(WARP_COUNT * 2 * 3);
+const warpCol = new Float32Array(WARP_COUNT * 2 * 3);
+const warpDir = new Float32Array(WARP_COUNT * 3);
+const warpRadius = new Float32Array(WARP_COUNT);
+const warpSpeed = new Float32Array(WARP_COUNT);
+const warpIsWarm = new Uint8Array(WARP_COUNT);
+function resetWarp(i, initial) {
+  const theta = Math.random() * TAU;
+  const phi = Math.acos(2 * Math.random() - 1);
+  warpDir[i * 3] = Math.sin(phi) * Math.cos(theta);
+  warpDir[i * 3 + 1] = Math.sin(phi) * Math.sin(theta);
+  warpDir[i * 3 + 2] = Math.cos(phi);
+  warpRadius[i] = initial ? 2 + Math.random() * 34 : 2.2 + Math.random() * 1.5;
+  warpSpeed[i] = 1.4 + Math.random() * 5.2;
+  warpIsWarm[i] = Math.random() < 0.14 ? 1 : 0;
+}
+for (let i = 0; i < WARP_COUNT; i += 1) {
+  resetWarp(i, true);
+  const warm = warpIsWarm[i];
+  const b = 0.35 + Math.random() * 0.65;
+  const r = (warm ? 1.0 : 0.32) * b;
+  const g = (warm ? 0.72 : 1.0) * b;
+  const bl = (warm ? 0.42 : 0.84) * b;
+  warpCol[i * 6] = r;
+  warpCol[i * 6 + 1] = g;
+  warpCol[i * 6 + 2] = bl;
+  warpCol[i * 6 + 3] = r * 0.16;
+  warpCol[i * 6 + 4] = g * 0.16;
+  warpCol[i * 6 + 5] = bl * 0.16;
+}
+const warpGeo = new THREE.BufferGeometry();
+warpGeo.setAttribute('position', new THREE.BufferAttribute(warpPos, 3));
+warpGeo.setAttribute('color', new THREE.BufferAttribute(warpCol, 3));
+const warpMat = new THREE.LineBasicMaterial({
+  vertexColors: true, transparent: true, opacity: 0.32,
+  blending: THREE.AdditiveBlending, depthWrite: false,
+});
+const warp = new THREE.LineSegments(warpGeo, warpMat);
+scene.add(warp);
+
+/* ══════════════════════════════════════════════════════════════
+   电弧 / 突触放电
+   ──────────────────────────────────────────────────────────────
+   这一层是这套东西的性格所在：不是「线在流动」，是**电在窜**。
+   中心球时不时往某个分区拉一条电弧，电弧的中间段乱抖；
+   两个分区之间也会突然对接，白热一瞬、几十毫秒就散。
+   用 Line 重算折线，每个活性电弧每帧只更新 26 个点，很便宜。
+   ══════════════════════════════════════════════════════════════ */
+const ARC_COUNT = 34;
+const ARC_SEG = 26;
+const ARC_STRANDS = 3;              // 一束由几条平行线编成
+const ARC_ALPHA = [1, 0.34, 0.15];  // 主线亮、伴线虚，横截面才有柔边
+const arcGroup = new THREE.Group();
+scene.add(arcGroup);
+const arcs = [];
+const _dv = new THREE.Vector3();
+const _p1 = new THREE.Vector3();
+const _p2 = new THREE.Vector3();
+let coreFlash = 0;
+
+for (let i = 0; i < ARC_COUNT; i += 1) {
+  const strands = [];
+  for (let k = 0; k < ARC_STRANDS; k += 1) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ARC_SEG * 3), 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(ARC_SEG * 3), 3));
+    const mat = new THREE.LineBasicMaterial({
+      vertexColors: true, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    });
+    const line = new THREE.Line(geo, mat);
+    line.visible = false;
+    line.frustumCulled = false;
+    arcGroup.add(line);
+    strands.push({ line, geo, mat });
+  }
+  arcs.push({
+    line: strands[0].line, geo: strands[0].geo, mat: strands[0].mat, strands,
+    from: new THREE.Vector3(), to: new THREE.Vector3(),
+    life: 0, maxLife: 1, active: false, seed: 0, amp: 1,
+    hide() { for (const s of this.strands) s.line.visible = false; },
+    show() { for (const s of this.strands) s.line.visible = true; },
+  });
+}
+
+function spawnArc(from, to, life, amp) {
+  const a = arcs.find((x) => !x.active);
+  if (!a) return;
+  a.from.copy(from);
+  a.to.copy(to);
+  a.life = 0;
+  a.maxLife = life || (0.16 + Math.random() * 0.26);
+  a.seed = Math.random() * 1000;
+  a.amp = amp || 1;
+  a.active = true;
+  a.show();
+}
+
+function updateArcs(dt) {
+  for (const a of arcs) {
+    if (!a.active) continue;
+    a.life += dt;
+    const t = a.life / a.maxLife;
+    if (t >= 1) { a.active = false; a.hide(); continue; }
+
+    _dv.copy(a.to).sub(a.from);
+    const len = _dv.length();
+    if (len < 1e-4) { a.active = false; a.hide(); continue; }
+    _dv.normalize();
+    // 两个垂直轴，用来把中间段抖开
+    _p1.set(0, 1, 0);
+    if (Math.abs(_dv.y) > 0.9) _p1.set(1, 0, 0);
+    _p1.crossVectors(_dv, _p1).normalize();
+    _p2.crossVectors(_dv, _p1).normalize();
+
+    const fade = 1 - t;
+
+    // 一束 = 几条平行细线。WebGL 的 lineWidth 恒为 1，单条线做不出粗细，
+    // 只能靠几根线散开、再靠亮度差拉出横截面：中间实、两边虚。
+    for (let k = 0; k < ARC_STRANDS; k += 1) {
+      const st = a.strands[k];
+      const pos = st.geo.attributes.position.array;
+      const col = st.geo.attributes.color.array;
+      const side = k - (ARC_STRANDS - 1) / 2;     // -1 / 0 / +1
+      const gap = a.amp * len * 0.022 * side;
+      const skew = k * 3.1;                       // 各条抖动相位错开，免得太齐
+
+      for (let i = 0; i < ARC_SEG; i += 1) {
+        const u = i / (ARC_SEG - 1);
+        const env = Math.sin(u * Math.PI);              // 两端贴住，中间抖
+        const w1 = Math.sin(u * 11 + a.seed + skew) * env * a.amp * len * 0.055;
+        const w2 = Math.cos(u * 15 + a.seed * 1.7 + skew) * env * a.amp * len * 0.055;
+        const o = i * 3;
+        pos[o] = a.from.x + _dv.x * len * u + _p1.x * (w1 + gap) + _p2.x * (w2 + gap * 0.6);
+        pos[o + 1] = a.from.y + _dv.y * len * u + _p1.y * (w1 + gap) + _p2.y * (w2 + gap * 0.6);
+        pos[o + 2] = a.from.z + _dv.z * len * u + _p1.z * (w1 + gap) + _p2.z * (w2 + gap * 0.6);
+
+        // 白热核心 → 青紫边缘
+        const hot = env;
+        // 紫白 —— 背景曲速线是青蓝，电弧必须跟它拉开，否则混成一片看不清
+        col[o] = 0.86 + hot * 0.14;
+        col[o + 1] = 0.58 + hot * 0.42;
+        col[o + 2] = 1.0;
+      }
+      st.geo.attributes.position.needsUpdate = true;
+      st.geo.attributes.color.needsUpdate = true;
+      // 原来这里每帧纯随机取 opacity，一束变三条之后等于十几个材质同时在跳，
+      // 看上去就是满屏乱闪。改成慢正弦打底 + 少量随机：噼啪还在，眼睛不累。
+      const flick = 0.66 + 0.20 * Math.sin(a.life * 48 + k * 2.3 + a.seed) + Math.random() * 0.10;
+      st.mat.opacity = fade * flick * ARC_ALPHA[k];
+      st.line.visible = true;
+    }
+  }
+}
+
+let arcTimer = 0.4;
+
+/* ══════════════════════════════════════════════════════════════
+   隧道：门环
+   ──────────────────────────────────────────────────────────────
+   原作者的隧道是「8000 条曲速线从中心射出去」，那是星流、不是隧道。
+   这里换成一串实体环：相机沿轴穿过去，每过一圈就换一段记忆切片，
+   环与环之间会跳电。跟曲速线完全两套东西。
+   ══════════════════════════════════════════════════════════════ */
+const GATE_COUNT = 13;
+const gateGroup = new THREE.Group();
+scene.add(gateGroup);
+const gates = [];
+for (let i = 0; i < GATE_COUNT; i += 1) {
+  const t = i / (GATE_COUNT - 1);
+  const mesh = new THREE.Mesh(
+    // 环必须贴着相机往前铺：摆在 60 单位外、管径 0.03，投到屏幕上不到 1px，
+    // 等于白画。半径固定、间距拉开，靠透视自己收缩成一串隧道口。
+    new THREE.TorusGeometry(3.6, 0.055, 8, 150),
+    new THREE.MeshBasicMaterial({
+      color: i % 3 === 0 ? 0xA78BFA : 0x22D3EE,
+      transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }),
+  );
+  mesh.position.z = 16 - t * 52;
+  mesh.userData.baseZ = mesh.position.z;
+  gateGroup.add(mesh);
+  gates.push(mesh);
+}
+function fireArcTick(dt) {
+  arcTimer -= dt;
+  if (arcTimer > 0) return;
+
+  // 隧道模式：在相邻门环之间跳电，一道接一道往前串
+  if (mode === 1) {
+    arcTimer = 0.06 + Math.random() * 0.22;
+    const i = (Math.random() * (GATE_COUNT - 1)) | 0;
+    spawnArc(gates[i].position, gates[i + 1].position, 0.16 + Math.random() * 0.2, 0.5);
+    return;
+  }
+
+  if (!nodePositions.size) return;
+  arcTimer = 0.05 + Math.random() * 0.24;
+
+  const ids = Array.from(nodePositions.keys());
+  const a = nodePositions.get(ids[(Math.random() * ids.length) | 0]);
+  if (!a) return;
+
+  // 六成从中心球打出去，四成节点之间对接
+  if (Math.random() < 0.58) {
+    _p1.set(0, 0, 0);
+    spawnArc(_p1, a, 0.42 + Math.random() * 0.55, 1.5);
+    coreFlash = 1;
+  } else {
+    const b = nodePositions.get(ids[(Math.random() * ids.length) | 0]);
+    if (b && b !== a) spawnArc(a, b, 0.36 + Math.random() * 0.48, 1.0);
+  }
+
+  // 偶尔来一次连续跳电：a → b → c，像神经传导
+  if (Math.random() < 0.22) {
+    const b = nodePositions.get(ids[(Math.random() * ids.length) | 0]);
+    const c = nodePositions.get(ids[(Math.random() * ids.length) | 0]);
+    if (b && c && b !== c) {
+      setTimeout(() => spawnArc(b, c, 0.14 + Math.random() * 0.16, 0.85), 90);
+    }
+  }
+}
+
+/* ───────────── 分区轨道 ───────────── */
+const belt = new THREE.Group();
+{
+  const ringMatA = new THREE.MeshBasicMaterial({
+    color: 0x22D3EE, transparent: true, opacity: 0.16,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const outer = new THREE.Mesh(new THREE.TorusGeometry(7.4, 0.014, 6, 320), ringMatA);
+  outer.rotation.x = Math.PI / 2;
+  belt.add(outer);
+  const innerRing = new THREE.Mesh(new THREE.TorusGeometry(6.85, 0.007, 6, 260), new THREE.MeshBasicMaterial({
+    color: 0x22D3EE, transparent: true, opacity: 0.09,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  }));
+  innerRing.rotation.x = Math.PI / 2;
+  belt.add(innerRing);
+
+  const tickCount = 72;
+  const tickPos = new Float32Array(tickCount * 6);
+  const tickCol = new Float32Array(tickCount * 6);
+  for (let i = 0; i < tickCount; i += 1) {
+    const angle = (i / tickCount) * TAU;
+    const long = i % 4 === 0;
+    const r0 = long ? 7.18 : 7.32;
+    const r1 = long ? 7.72 : 7.56;
+    const p = i * 6;
+    tickPos[p] = Math.cos(angle) * r0;
+    tickPos[p + 1] = 0;
+    tickPos[p + 2] = Math.sin(angle) * r0;
+    tickPos[p + 3] = Math.cos(angle) * r1;
+    tickPos[p + 4] = 0;
+    tickPos[p + 5] = Math.sin(angle) * r1;
+    const fade = long ? 0.55 : 0.22;
+    tickCol[p] = 0.3 * fade;
+    tickCol[p + 1] = 1.0 * fade;
+    tickCol[p + 2] = 0.82 * fade;
+    tickCol[p + 3] = 0.3 * fade;
+    tickCol[p + 4] = 1.0 * fade;
+    tickCol[p + 5] = 0.82 * fade;
+  }
+  const tickGeo = new THREE.BufferGeometry();
+  tickGeo.setAttribute('position', new THREE.BufferAttribute(tickPos, 3));
+  tickGeo.setAttribute('color', new THREE.BufferAttribute(tickCol, 3));
+  belt.add(new THREE.LineSegments(tickGeo, new THREE.LineBasicMaterial({
+    vertexColors: true, transparent: true, opacity: 0.5,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })));
+}
+scene.add(belt);
+
+/* 环上流光：几颗亮点沿轨道跑。画面原来只有「呼吸」，没有「运转」 ——
+   加点持续位移的东西，眼睛才有得追，不至于只盯着中间那颗球看它闪。 */
+const beltRunners = [];
+{
+  const specs = [
+    { r: 7.40, c: 0x22D3EE, sp: 0.42, sz: 0.58 },
+    { r: 7.40, c: 0xA78BFA, sp: 0.31, sz: 0.44 },
+    { r: 6.85, c: 0x67E8F9, sp: 0.62, sz: 0.36 },
+    { r: 6.85, c: 0xFBBF24, sp: 0.24, sz: 0.32 },
+  ];
+  for (const spec of specs) {
+    const spark = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: GLOW, color: spec.c, transparent: true, opacity: 0.8,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }));
+    spark.scale.set(spec.sz, spec.sz, 1);
+    spark.userData = { r: spec.r, a: Math.random() * TAU, sp: spec.sp, base: 0.8, ph: Math.random() * TAU };
+    belt.add(spark);
+    beltRunners.push(spark);
+  }
+}
+
+const tiltedOrbit = new THREE.Mesh(
+  new THREE.TorusGeometry(9.6, 0.008, 5, 360),
+  new THREE.MeshBasicMaterial({
+    color: 0x22D3EE, transparent: true, opacity: 0.07,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })
+);
+tiltedOrbit.rotation.set(1.02, 0.24, 0);
+scene.add(tiltedOrbit);
+
+/* ───────────── 银河（真实记忆） ───────────── */
+const galaxy = new THREE.Group();
+scene.add(galaxy);
+let nodePositions = new Map();
+let memorySprites = [];
+let edgeLines = [];
+let edgeCurves = [];
+let labelSprites = [];
+let nodeSprites = [];
+let currentSignature = '';
+let selectedSprite = null;
+let hoveredSprite = null;
+const pulseSprites = [];
+const pulseState = [];
+
+function disposeGroup(group) {
+  const geometries = new Set();
+  const materials = new Set();
+  const textures = new Set();
+  group.traverse((object) => {
+    if (object.geometry) geometries.add(object.geometry);
+    if (object.material) {
+      const list = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of list) {
+        materials.add(material);
+        if (material.map) textures.add(material.map);
+      }
+    }
+  });
+  for (const child of [...group.children]) group.remove(child);
+  geometries.forEach((g) => g.dispose());
+  materials.forEach((m) => m.dispose());
+  textures.forEach((t) => t.dispose());
+}
+
+function mulberry(seed) {
+  let a = seed >>> 0;
+  return function random() {
+    a += 0x6D2B79F5;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildGalaxy(data) {
+  disposeGroup(galaxy);
+  nodePositions = new Map();
+  memorySprites = [];
+  edgeLines = [];
+  edgeCurves = [];
+  labelSprites = [];
+  nodeSprites = [];
+  pulseSprites.length = 0;
+  pulseState.length = 0;
+  selectedSprite = null;
+  hoveredSprite = null;
+  selectedMemory = null;
+  detail.classList.remove('show');
+  tooltip.style.display = 'none';
+
+  const nodes = data.nodes || [];
+  const memories = data.memories || [];
+  const edges = data.edges || [];
+  const RADIUS = 9.2;
+
+  // ★ 分区不再排成一个平面圆环（那是原来「中间一坨、四周一圈」的根源），
+  //   改成斐波那契球面分布：从任何角度看都是立体的星团，前后有真有假纵深。
+  const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+  nodes.forEach((node, i) => {
+    const n = Math.max(1, nodes.length);
+    const y = 1 - (i / Math.max(1, n - 1)) * 2;      // -1 .. 1
+    const ring = Math.sqrt(Math.max(0, 1 - y * y));
+    const theta = GOLDEN * i;
+    // 半径做一点抖动，免得球壳太规整
+    const R = RADIUS * (0.82 + ((i * 37) % 11) / 11 * 0.34);
+    const pos = new THREE.Vector3(
+      Math.cos(theta) * ring * R,
+      y * R,
+      Math.sin(theta) * ring * R
+    );
+    nodePositions.set(node.id, pos);
+
+    const nodeSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: GLOW, color: 0xbef0ff, transparent: true, opacity: 0.95,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }));
+    const scale = 0.78 + Math.min(10, node.degree || 0) * 0.075;
+    nodeSprite.scale.set(scale, scale, 1);
+    nodeSprite.position.copy(pos);
+    nodeSprite.userData = { kind: 'node', node };
+    galaxy.add(nodeSprite);
+    nodeSprites.push(nodeSprite);
+
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: GLOW, color: 0x22D3EE, transparent: true, opacity: 0.15,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }));
+    halo.scale.set(scale * 3.4, scale * 3.4, 1);
+    halo.position.copy(pos);
+    galaxy.add(halo);
+    nodeSprite.userData.halo = halo;
+
+    const { tex, aspect } = labelTexture(String(node.name || '').slice(0, 9));
+    const label = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: tex, transparent: true, opacity: 0.62, depthWrite: false, depthTest: false, fog: false,
+    }));
+    label.scale.set(aspect * 0.52, 0.52, 1);
+    label.position.copy(pos.clone().multiplyScalar(1.16));
+    label.userData = { kind: 'label', nodeId: node.id };
+    galaxy.add(label);
+    labelSprites.push(label);
+  });
+
+  const kindMaterials = new Map();
+  function memoryMaterial(kind) {
+    if (kindMaterials.has(kind)) return kindMaterials.get(kind);
+    const material = new THREE.SpriteMaterial({
+      map: GLOW, color: KIND_COLOR[kind] || KIND_COLOR.unknown, transparent: true, opacity: 0.9,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    });
+    kindMaterials.set(kind, material);
+    return material;
+  }
+
+  memories.forEach((memory) => {
+    const base = nodePositions.get(memory.nodeId) || new THREE.Vector3(0, 0, 0);
+    const random = mulberry(memory.id * 2654435761 + 17);
+    const theta = random() * TAU;
+    const phi = Math.acos(2 * random() - 1);
+    // 簇半径收紧：59 个分区同时展开的话，2.1 会让相邻簇糊在一起
+    const radius = 0.28 + Math.pow(random(), 0.75) * 1.35;
+    const pos = new THREE.Vector3(
+      base.x + Math.sin(phi) * Math.cos(theta) * radius,
+      base.y + Math.sin(phi) * Math.sin(theta) * radius,
+      base.z + Math.cos(phi) * radius * 0.9
+    );
+    const sprite = new THREE.Sprite(memoryMaterial(memory.kind || 'unknown'));
+    const scale = 0.18 + (memory.importance || 0.5) * 0.34;
+    sprite.scale.set(scale, scale, 1);
+    sprite.position.copy(pos);
+    sprite.userData = {
+      kind: 'memory', memory, baseScale: scale,
+      baseOpacity: memory.dead ? 0.22 : 0.9,
+      node: nodes.find((item) => item.id === memory.nodeId),
+    };
+    sprite.userData.baseScaleVec = sprite.scale.clone();
+    sprite.material = sprite.material.clone();
+    galaxy.add(sprite);
+    memorySprites.push(sprite);
+  });
+
+  edges.forEach((edge) => {
+    const a = nodePositions.get(edge.src);
+    const b = nodePositions.get(edge.dst);
+    if (!a || !b) return;
+    const mid = a.clone().add(b).multiplyScalar(0.5).multiplyScalar(0.52);
+    const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+    const points = curve.getPoints(48);
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({
+      color: 0x22D3EE, transparent: true, opacity: 0.17,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const line = new THREE.Line(geometry, material);
+    galaxy.add(line);
+    edgeLines.push(line);
+    edgeCurves.push(curve);
+  });
+
+  for (let i = 0; i < 54; i += 1) {
+    if (!edgeCurves.length) break;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: GLOW, color: 0xd8c4ff, transparent: true, opacity: 0.95,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }));
+    sprite.scale.set(0.20, 0.20, 1);
+    galaxy.add(sprite);
+    pulseSprites.push(sprite);
+    pulseState.push({
+      curve: edgeCurves[Math.floor(Math.random() * edgeCurves.length)],
+      t: Math.random(), speed: 0.26 + Math.random() * 0.55,
+    });
+  }
+  resetStreams();
+}
+
+/* ───────────── 相机 ───────────── */
+const cam = {
+  yaw: 0.62, pitch: 0.18, dist: 25,
+  targetYaw: 0.62, targetPitch: 0.18, targetDist: 25,
+  dragging: false, lastX: 0, lastY: 0, idle: 0,
+};
+let lookShift = 0.9;   // 构图偏移量：只轻推一点，推太狠 3D 文字标签会飘到左栏压住 KPI
+function updateCamera(dt) {
+  // mode 声明在文件更下面，updateCamera(0) 这个初始化调用发生在它之前。
+  // 注意：typeof 对 TDZ 变量一样会抛 ReferenceError，兜不住，只能用 try。
+  let inTunnel = false;
+  try { inTunnel = (mode === 1); } catch (e) { inTunnel = false; }
+  if (inTunnel && !cam.dragging) {
+    // 隧道模式必须正对着穿：斜着看，一串门环会错开成散的圆
+    cam.targetYaw *= 0.93;
+    cam.targetPitch *= 0.93;
+    cam.targetDist = 11;
+  } else if (!cam.dragging) {
+    cam.idle += dt;
+    if (cam.idle > 2.4) cam.targetYaw += 0.055 * dt;
+  }
+  cam.yaw += (cam.targetYaw - cam.yaw) * Math.min(1, dt * 5);
+  cam.pitch += (cam.targetPitch - cam.pitch) * Math.min(1, dt * 5);
+  cam.dist += (cam.targetDist - cam.dist) * Math.min(1, dt * 3.6);
+  const cp = Math.cos(cam.pitch);
+  camera.position.set(
+    Math.sin(cam.yaw) * cp * cam.dist,
+    Math.sin(cam.pitch) * cam.dist,
+    Math.cos(cam.yaw) * cp * cam.dist
+  );
+  // 构图：试过把注视点推出画外（haloflux 那套圆心留在框外），在星炬这里不成立 ——
+  // 中间的视觉区被左右面板夹着，推出去只会让 3D 文字标签飘进左栏压住 KPI。
+  // 保留微量下移，让主体不在数学正中心，但不出格。
+  const wantShift = inTunnel ? 0 : 0;
+  lookShift += (wantShift - lookShift) * Math.min(1, dt * 3);
+  const shiftX = Math.cos(cam.yaw) * lookShift;
+  const shiftZ = -Math.sin(cam.yaw) * lookShift;
+  camera.lookAt(shiftX, 0.4, shiftZ);
+}
+updateCamera(0);
+
+/* ───────────── 交互 ───────────── */
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2(-10, -10);
+let pointerDirty = false;
+
+canvas.addEventListener('pointerdown', (event) => {
+  cam.dragging = true;
+  cam.lastX = event.clientX;
+  cam.lastY = event.clientY;
+  cam.idle = 0;
+  canvas.setPointerCapture(event.pointerId);
+});
+canvas.addEventListener('pointermove', (event) => {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  pointerDirty = true;
+  if (cam.dragging) {
+    const dx = event.clientX - cam.lastX;
+    const dy = event.clientY - cam.lastY;
+    cam.lastX = event.clientX;
+    cam.lastY = event.clientY;
+    cam.targetYaw -= dx * 0.005;
+    cam.targetPitch = Math.max(-1.15, Math.min(1.15, cam.targetPitch + dy * 0.004));
+  }
+});
+function endDrag(event) {
+  if (!cam.dragging) return;
+  cam.dragging = false;
+  cam.idle = 0;
+  try { canvas.releasePointerCapture(event.pointerId); } catch {}
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('pointerleave', () => { pointer.x = -10; pointer.y = -10; });
+canvas.addEventListener('wheel', (event) => {
+  event.preventDefault();
+  cam.targetDist = Math.max(11, Math.min(48, cam.targetDist * (1 + event.deltaY * 0.0007)));
+  cam.idle = 0;
+}, { passive: false });
+canvas.addEventListener('dblclick', () => {
+  cam.targetYaw = 0.62;
+  cam.targetPitch = 0.18;
+  cam.targetDist = 25;
+  setMode(0);
+  clientEvent('CAMERA RESET', 'dim');
+});
+canvas.addEventListener('click', (event) => {
+  spawnShock(event.clientX, event.clientY, hoveredSprite ? 26 : 66);
+  triggerShock3D(hoveredSprite ? 0.7 : 1.15);
+  if (hoveredSprite) selectMemory(hoveredSprite);
+});
+
+/* ───────────── 选中与悬停 ───────────── */
+let selectedMemory = null;
+const tooltip = $('tooltip');
+const detail = $('detail');
+
+function selectMemory(sprite) {
+  if (selectedSprite) selectedSprite.scale.copy(selectedSprite.userData.baseScaleVec || selectedSprite.scale);
+  selectedSprite = sprite;
+  selectedMemory = sprite.userData.memory;
+  const memory = sprite.userData.memory;
+  const node = sprite.userData.node;
+  const kind = memory.kind || 'unknown';
+  $('d-kind').textContent = (KIND_CN[kind] || kind).toUpperCase() + ' · ' + kind.toUpperCase();
+  $('d-text').textContent = memory.text || '（无正文）';
+  $('d-meta').textContent = `${node ? node.name : '未归属分区'} · 重要度 ${(memory.importance * 100).toFixed(0)}% · ${memory.dead ? '已失效' : '有效'}`;
+  detail.classList.add('show');
+  tooltip.style.display = 'none';
+  clientEvent('FOCUS MEMORY #' + memory.id + ' · ' + kind.toUpperCase(), 'ok');
+}
+function closeDetail() {
+  detail.classList.remove('show');
+  selectedSprite = null;
+  selectedMemory = null;
+}
+$('d-close').addEventListener('click', closeDetail);
+
+let hoverTick = 0;
+function updateHover() {
+  if (!memorySprites.length) return;
+  if (detail.classList.contains('show')) {
+    tooltip.style.display = 'none';
+    return;
+  }
+  hoverTick += 1;
+  if (!pointerDirty && hoverTick % 4 !== 0) return;
+  pointerDirty = false;
+  if (pointer.x < -1) {
+    if (hoveredSprite && hoveredSprite !== selectedSprite) hoveredSprite.scale.copy(hoveredSprite.userData.baseScaleVec);
+    hoveredSprite = null;
+    tooltip.style.display = 'none';
+    canvas.style.cursor = cam.dragging ? 'grabbing' : 'grab';
+    return;
+  }
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(memorySprites, false);
+  const next = hits.length && hits[0].object.visible ? hits[0].object : null;
+  if (hoveredSprite && hoveredSprite !== next) {
+    if (hoveredSprite !== selectedSprite) hoveredSprite.scale.copy(hoveredSprite.userData.baseScaleVec);
+  }
+  hoveredSprite = next;
+  if (hoveredSprite) {
+    hoveredSprite.scale.copy(hoveredSprite.userData.baseScaleVec).multiplyScalar(1.75);
+    const memory = hoveredSprite.userData.memory;
+    const kind = memory.kind || 'unknown';
+    $('tt-kind').textContent = (KIND_CN[kind] || kind) + ' · #' + memory.id;
+    $('tt-text').textContent = String(memory.text || '').slice(0, 78) + (String(memory.text || '').length > 78 ? '…' : '');
+    tooltip.style.display = 'block';
+    const x = Math.min(window.innerWidth - 310, (pointer.x + 1) / 2 * window.innerWidth + 16);
+    const y = Math.min(window.innerHeight - 90, (-pointer.y + 1) / 2 * window.innerHeight + 14);
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+    canvas.style.cursor = 'pointer';
+  } else {
+    tooltip.style.display = 'none';
+    canvas.style.cursor = cam.dragging ? 'grabbing' : 'grab';
+  }
+}
+
+/* ───────────── 2D 叠加特效 ───────────── */
+let fxCtxScale = 1;
+const bolts = [];
+const shocks = [];
+let boltTimer = 0;
+
+function resizeFx() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  fxCtxScale = dpr;
+  fx.width = Math.round(window.innerWidth * dpr);
+  fx.height = Math.round(window.innerHeight * dpr);
+  fx.style.width = window.innerWidth + 'px';
+  fx.style.height = window.innerHeight + 'px';
+  fxc.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function project(vec3) {
+  const v = vec3.clone().project(camera);
+  return {
+    x: (v.x * 0.5 + 0.5) * window.innerWidth,
+    y: (-v.y * 0.5 + 0.5) * window.innerHeight,
+    visible: v.z < 1,
+  };
+}
+
+function spawnShock(x, y, radius) {
+  shocks.push({ x, y, r: 4, max: radius, life: 1 });
+}
+
+function spawnBolt() {
+  if (edgeCurves.length < 2) return;
+  const curve = edgeCurves[Math.floor(Math.random() * edgeCurves.length)];
+  const a = project(curve.getPoint(0));
+  const b = project(curve.getPoint(1));
+  if (!a.visible || !b.visible) return;
+  const points = [];
+  const segments = 8;
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    const jitter = i === 0 || i === segments ? 0 : (Math.random() - 0.5) * 26;
+    points.push({
+      x: a.x + (b.x - a.x) * t + jitter,
+      y: a.y + (b.y - a.y) * t + jitter * 0.6,
+    });
+  }
+  bolts.push({ points, life: 1, width: 0.8 + Math.random() * 1.4 });
+}
+
+function updateFx(dt) {
+  fxc.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+  boltTimer += dt;
+  if (boltTimer > 1.8) {
+    boltTimer = 0;
+    spawnBolt();
+    if (Math.random() < 0.4) setTimeout(spawnBolt, 90);
+  }
+
+  for (let i = bolts.length - 1; i >= 0; i -= 1) {
+    const bolt = bolts[i];
+    bolt.life -= dt * 3.4;
+    if (bolt.life <= 0) { bolts.splice(i, 1); continue; }
+    fxc.save();
+    fxc.globalCompositeOperation = 'lighter';
+    fxc.strokeStyle = `rgba(130,255,225,${bolt.life * 0.55})`;
+    fxc.lineWidth = bolt.width;
+    fxc.shadowColor = 'rgba(52,211,153,0.9)';
+    fxc.shadowBlur = 10;
+    fxc.beginPath();
+    bolt.points.forEach((point, index) => {
+      if (index === 0) fxc.moveTo(point.x, point.y); else fxc.lineTo(point.x, point.y);
+    });
+    fxc.stroke();
+    fxc.restore();
+  }
+
+  for (let i = shocks.length - 1; i >= 0; i -= 1) {
+    const shock = shocks[i];
+    shock.life -= dt * 1.6;
+    if (shock.life <= 0) { shocks.splice(i, 1); continue; }
+    const progress = 1 - shock.life;
+    const radius = 4 + shock.max * progress;
+    fxc.save();
+    fxc.globalCompositeOperation = 'lighter';
+    fxc.strokeStyle = `rgba(120,255,225,${shock.life * 0.6})`;
+    fxc.lineWidth = 1.4;
+    fxc.shadowColor = 'rgba(52,211,153,0.8)';
+    fxc.shadowBlur = 14;
+    fxc.beginPath();
+    fxc.arc(shock.x, shock.y, radius, 0, TAU);
+    fxc.stroke();
+    fxc.restore();
+  }
+
+  if (hoveredSprite) {
+    const p = project(hoveredSprite.position);
+    if (p.visible) {
+      const nodePos = nodePositions.get(hoveredSprite.userData.memory?.nodeId);
+      if (nodePos) {
+        const np = project(nodePos);
+        if (np.visible) {
+          fxc.save();
+          fxc.strokeStyle = 'rgba(120,255,225,0.32)';
+          fxc.lineWidth = 1;
+          fxc.setLineDash([3, 5]);
+          fxc.beginPath();
+          fxc.moveTo(np.x, np.y);
+          fxc.lineTo(p.x, p.y);
+          fxc.stroke();
+          fxc.setLineDash([]);
+          fxc.beginPath();
+          fxc.arc(np.x, np.y, 3.2, 0, TAU);
+          fxc.stroke();
+          fxc.restore();
+        }
+      }
+      fxc.save();
+      fxc.strokeStyle = 'rgba(160,255,235,0.75)';
+      fxc.lineWidth = 1;
+      const r = 11;
+      fxc.beginPath();
+      fxc.moveTo(p.x - r, p.y); fxc.lineTo(p.x - r + 4, p.y);
+      fxc.moveTo(p.x + r, p.y); fxc.lineTo(p.x + r - 4, p.y);
+      fxc.moveTo(p.x, p.y - r); fxc.lineTo(p.x, p.y - r + 4);
+      fxc.moveTo(p.x, p.y + r); fxc.lineTo(p.x, p.y + r - 4);
+      fxc.stroke();
+      fxc.restore();
+    }
+  }
+}
+
+/* ───────────── 动画状态 ───────────── */
+let mode = 0;
+let galaxyOpacity = 1;
+let tunnelOpacity = 0.5;
+let edgeOpacity = 0.17;
+let time = 0;
+let frames = 0;
+let panelTimer = 1;
+let fpsAt = performance.now();
+let fps = 60;
+let filterKind = null;
+const hiddenKinds = new Set();
+let focusNodeId = null;
+
+function setMode(next) {
+  mode = next;
+  document.querySelectorAll('.tabs button').forEach((button) => {
+    button.classList.toggle('on', Number(button.dataset.mode) === next);
+  });
+  cam.targetDist = [25, 16.5, 28][next];
+  clientEvent(['星团模式 · 轨道簇', '隧道模式 · 曲速核心', '关系网模式 · 链路饱和'][next], 'ok');
+}
+document.querySelectorAll('.tabs button').forEach((button) => {
+  button.addEventListener('click', () => setMode(Number(button.dataset.mode)));
+});
+$('cinema').addEventListener('click', () => {
+  document.body.classList.toggle('cinema');
+  clientEvent(document.body.classList.contains('cinema') ? 'CINEMA MODE ON' : 'CINEMA MODE OFF', 'dim');
+});
+
+/* ───────────── 底部图表 ───────────── */
+const panels = ['cv-swarm', 'cv-router', 'cv-wave', 'cv-heat'].map((id) => {
+  const cv = $(id);
+  return { cv, ctx: cv.getContext('2d') };
+});
+function fitPanels() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  for (const panel of panels) {
+    const rect = panel.cv.getBoundingClientRect();
+    if (!rect.width || !rect.height) continue;
+    panel.cv.width = Math.round(rect.width * dpr);
+    panel.cv.height = Math.round(rect.height * dpr);
+    panel.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    panel.w = rect.width;
+    panel.h = rect.height;
+  }
+}
+
+let data = null;
+function drawSwarm() {
+  const p = panels[0];
+  const c = p.ctx;
+  const w = p.w || 1;
+  const h = p.h || 1;
+  c.clearRect(0, 0, w, h);
+
+  const cx0 = w / 2, cy0 = h / 2;
+  const R = Math.min(w, h) * 0.46;
+  const memories = data ? data.memories : [];
+
+  // 中心辉光：先铺一层柔光，粒子才有「从核里喷出来」的落点
+  const g = c.createRadialGradient(cx0, cy0, 0, cx0, cy0, R * 0.9);
+  g.addColorStop(0.00, 'rgba(34,211,238,0.20)');
+  g.addColorStop(0.35, 'rgba(34,211,238,0.055)');
+  g.addColorStop(1.00, 'rgba(120,140,255,0)');
+  c.fillStyle = g;
+  c.beginPath();
+  c.arc(cx0, cy0, R * 0.9, 0, TAU);
+  c.fill();
+
+  // 粒子沿径向持续外流，到边回卷 —— 静态点阵看着像贴图，流动起来才像场
+  const N = 200;
+  for (let i = 0; i < N; i += 1) {
+    const seed = ((i * 9301 + 49297) % 233280) / 233280;
+    const seed2 = ((i * 4177 + 12345) % 65536) / 65536;
+    const ang = seed * TAU + Math.sin(time * 0.3 + i * 0.7) * 0.06;
+    const rr = (seed2 + time * (0.05 + seed * 0.11)) % 1;
+    const rad = rr * R;
+    const x = cx0 + Math.cos(ang) * rad;
+    const y = cy0 + Math.sin(ang) * rad * 0.68;
+
+    const mm = memories.length ? memories[i % memories.length] : null;
+    const rgb = mm ? (KIND_RGB[mm.kind] || KIND_RGB.unknown) : [34,211,238];
+    const alpha = (1 - rr * 0.82) * 0.78;
+
+    // 拖尾：从当前位置往回拉一小段
+    const rr2 = Math.max(0, rr - 0.085);
+    const rad2 = rr2 * R;
+    const x2 = cx0 + Math.cos(ang) * rad2;
+    const y2 = cy0 + Math.sin(ang) * rad2 * 0.68;
+    const lg = c.createLinearGradient(x2, y2, x, y);
+    lg.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
+    lg.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha * 0.55})`);
+    c.strokeStyle = lg;
+    c.lineWidth = 1;
+    c.beginPath();
+    c.moveTo(x2, y2);
+    c.lineTo(x, y);
+    c.stroke();
+
+    // 粒子头：越靠外越小，做出「散开」的观感
+    c.fillStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
+    c.beginPath();
+    c.arc(x, y, 0.65 + (1 - rr) * 1.5, 0, TAU);
+    c.fill();
+  }
+}
+function drawRouter() {
+  const p = panels[1];
+  const c = p.ctx;
+  const w = p.w || 1;
+  const h = p.h || 1;
+  c.clearRect(0, 0, w, h);
+  const kinds = data ? Object.entries(data.kindCount || {}) : [];
+  kinds.sort((a, b) => b[1] - a[1]);
+  const rows = kinds.slice(0, 5);
+  const max = Math.max(1, ...rows.map((row) => row[1]));
+  const rowH = h / 5;
+  c.font = '9.5px "Cascadia Mono",Consolas,monospace';
+  c.textBaseline = 'middle';
+  rows.forEach(([name, value], i) => {
+    const y = rowH * (i + 0.5);
+    const rgb = KIND_RGB[name] || KIND_RGB.unknown;
+    const trackW = w - 54;
+    const barW = Math.max(2, (value / max) * trackW);
+
+    // 轨道
+    c.fillStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.10)`;
+    c.fillRect(50, y - 2.5, trackW, 5);
+
+    // 条体：左暗右亮，尾部收成一点光
+    const lg = c.createLinearGradient(50, 0, 50 + barW, 0);
+    lg.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.30)`);
+    lg.addColorStop(0.75, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.80)`);
+    lg.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`);
+    c.fillStyle = lg;
+    c.fillRect(50, y - 2.5, barW, 5);
+
+    // 末端高光
+    c.fillStyle = `rgba(255,255,255,0.85)`;
+    c.fillRect(50 + barW - 1.5, y - 2.5, 1.5, 5);
+
+    // 沿条流动的光点 —— 静态条形像死块，跑一个点才有「总线在传」的意思
+    const ph = (time * 0.5 + i * 0.23) % 1;
+    const px = 50 + ph * barW;
+    const halo = c.createRadialGradient(px, y, 0, px, y, 7);
+    halo.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.55)`);
+    halo.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)`);
+    c.fillStyle = halo;
+    c.fillRect(px - 7, y - 7, 14, 14);
+    c.fillStyle = 'rgba(255,255,255,0.92)';
+    c.fillRect(px - 1, y - 3.5, 2, 7);
+
+    c.fillStyle = 'rgba(150,215,255,0.66)';
+    c.textAlign = 'left';
+    c.fillText(KIND_CN[name] || String(name).slice(0, 6), 0, y);
+    c.fillStyle = 'rgba(223,242,255,0.86)';
+    c.textAlign = 'right';
+    c.fillText(String(value), w - 1, y);
+  });
+}
+function drawWave() {
+  const p = panels[2];
+  const c = p.ctx;
+  const w = p.w || 1;
+  const h = p.h || 1;
+  c.clearRect(0, 0, w, h);
+  const samples = data && data.waveform && data.waveform.length
+    ? data.waveform
+    : Array.from({ length: 60 }, () => ({ cpu: 0, mem: 0.5 }));
+
+  // 网格
+  c.strokeStyle = 'rgba(30,42,68,0.07)';
+  c.lineWidth = 1;
+  for (let i = 1; i < 4; i += 1) {
+    c.beginPath();
+    c.moveTo(0, (h / 4) * i);
+    c.lineTo(w, (h / 4) * i);
+    c.stroke();
+  }
+
+  const path = (key) => {
+    const pts = samples.map((s, i) => [
+      (i / Math.max(1, samples.length - 1)) * w,
+      h - 3 - s[key] * (h - 12),
+    ]);
+    return pts;
+  };
+
+  // CPU：面积填充 + 亮线
+  const cpu = path('cpu');
+  const grad = c.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(34,211,238,0.28)');
+  grad.addColorStop(1, 'rgba(34,211,238,0)');
+  c.beginPath();
+  c.moveTo(cpu[0][0], h);
+  for (const [x, y] of cpu) c.lineTo(x, y);
+  c.lineTo(cpu[cpu.length - 1][0], h);
+  c.closePath();
+  c.fillStyle = grad;
+  c.fill();
+
+  c.beginPath();
+  cpu.forEach(([x, y], i) => (i === 0 ? c.moveTo(x, y) : c.lineTo(x, y)));
+  c.strokeStyle = 'rgba(34,211,238,0.9)';
+  c.lineWidth = 1.4;
+  c.stroke();
+
+  // MEM：细线
+  const mem = path('mem');
+  c.beginPath();
+  mem.forEach(([x, y], i) => (i === 0 ? c.moveTo(x, y) : c.lineTo(x, y)));
+  c.strokeStyle = 'rgba(167,139,250,0.55)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  // 末端光点 + 外晕：给个「正在采样」的落点
+  const last = cpu[cpu.length - 1];
+  if (last) {
+    const halo = c.createRadialGradient(last[0], last[1], 0, last[0], last[1], 9);
+    halo.addColorStop(0, 'rgba(180,240,255,0.85)');
+    halo.addColorStop(1, 'rgba(34,211,238,0)');
+    c.fillStyle = halo;
+    c.fillRect(last[0] - 9, last[1] - 9, 18, 18);
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.arc(last[0], last[1], 1.8, 0, TAU);
+    c.fill();
+  }
+
+  // 横向扫描线（走一遍表示时间在推进）
+  const sx = ((time * 0.4) % 1) * w;
+  const sl = c.createLinearGradient(sx - 14, 0, sx + 2, 0);
+  sl.addColorStop(0, 'rgba(34,211,238,0)');
+  sl.addColorStop(1, 'rgba(34,211,238,0.20)');
+  c.fillStyle = sl;
+  c.fillRect(sx - 14, 0, 16, h);
+
+  const lastSample = samples[samples.length - 1] || { cpu: 0, mem: 0 };
+  $('wave-read').textContent = 'CPU ' + Math.round(lastSample.cpu * 100) + '% · MEM ' + Math.round(lastSample.mem * 100) + '%';
+}
+function drawHeat() {
+  const p = panels[3];
+  const c = p.ctx;
+  const w = p.w || 1;
+  const h = p.h || 1;
+  c.clearRect(0, 0, w, h);
+  const matrix = data && data.matrix && data.matrix.length ? data.matrix : [];
+  const n = matrix.length || 18;
+  const cell = Math.min((w - 2) / n, (h - 2) / n);
+  const ox = (w - cell * n) / 2;
+  const oy = (h - cell * n) / 2;
+
+  // 扫描列：一束光从左扫到右，周期性点亮整列
+  const scanCol = ((time * 0.22) % 1) * n;
+  const scanAmt = Math.max(0, 1 - Math.abs(scanCol % 1 - 0.5) * 2);
+
+  for (let y = 0; y < n; y += 1) {
+    for (let x = 0; x < n; x += 1) {
+      const value = matrix[y] ? matrix[y][x] || 0 : 0;
+      const distScan = Math.abs(x - scanCol);
+      const scan = Math.max(0, 1 - distScan / 1.6) * scanAmt;
+
+      let alpha = value > 0 ? 0.14 + Math.pow(value, 0.55) * 0.72 : 0.022;
+      alpha = Math.min(1, alpha + scan * 0.30);
+
+      // 有值 → 冷白 / 青蓝；空格 → 极淡底
+      if (value > 0.55) c.fillStyle = `rgba(206,240,255,${alpha})`;
+      else if (value > 0) c.fillStyle = `rgba(34,211,238,${alpha})`;
+      else c.fillStyle = `rgba(30,42,68,${alpha + scan * 0.10})`;
+
+      c.fillRect(ox + x * cell, oy + y * cell, Math.max(1, cell - 1.2), Math.max(1, cell - 1.2));
+
+      // 高值格子加一点外晕，别让矩阵看着像表格
+      if (value > 0.7) {
+        const gx = ox + x * cell + cell / 2;
+        const gy = oy + y * cell + cell / 2;
+        const glow = c.createRadialGradient(gx, gy, 0, gx, gy, cell * 1.6);
+        glow.addColorStop(0, `rgba(157,176,208,${0.22 * value})`);
+        glow.addColorStop(1, 'rgba(157,176,208,0)');
+        c.fillStyle = glow;
+        c.fillRect(gx - cell * 1.6, gy - cell * 1.6, cell * 3.2, cell * 3.2);
+      }
+    }
+  }
+
+  if (matrix.length) {
+    // 边框 + 四角标记，做成仪表盘的样子
+    c.strokeStyle = 'rgba(30,42,68,0.28)';
+    c.lineWidth = 1;
+    c.strokeRect(ox - 1.5, oy - 1.5, cell * n + 3, cell * n + 3);
+    c.strokeStyle = 'rgba(34,211,238,0.75)';
+    const L = Math.min(7, cell * 2);
+    const corners = [
+      [ox - 1.5, oy - 1.5, 1, 1],
+      [ox + cell * n + 1.5, oy - 1.5, -1, 1],
+      [ox - 1.5, oy + cell * n + 1.5, 1, -1],
+      [ox + cell * n + 1.5, oy + cell * n + 1.5, -1, -1],
+    ];
+    for (const [x0, y0, sx, sy] of corners) {
+      c.beginPath();
+      c.moveTo(x0 + sx * L, y0);
+      c.lineTo(x0, y0);
+      c.lineTo(x0, y0 + sy * L);
+      c.stroke();
+    }
+  }
+}
+function drawAllPanels() {
+  drawSwarm();
+  drawRouter();
+  drawWave();
+  drawHeat();
+}
+
+/* ───────────── HUD ───────────── */
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+}
+const clientEvents = [];
+function clientEvent(text, level = 'dim') {
+  clientEvents.unshift({ t: Date.now(), level, text });
+  if (clientEvents.length > 18) clientEvents.pop();
+  logStamp = '';
+  updateLog();
+}
+let logStamp = '';
+function updateLog() {
+  const serverEvents = data && data.events ? data.events : [];
+  const merged = [];
+  const seen = new Set();
+  for (const item of [...clientEvents, ...serverEvents]) {
+    const key = item.t + '|' + item.text;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+    if (merged.length >= 12) break;
+  }
+  const stamp = merged.map((item) => item.t + item.text).join('~');
+  if (stamp === logStamp) return;
+  logStamp = stamp;
+  $('log').innerHTML = merged.slice(0, 11).map((item) => {
+    const timeText = new Date(item.t).toLocaleTimeString('zh-CN', { hour12: false });
+    return `<div class="${item.level || 'dim'}"><span class="t">${timeText}</span>${escapeHtml(item.text)}</div>`;
+  }).join('');
+  $('log-seq').textContent = String(data?.server?.snapshotSeq || 0).padStart(3, '0');
+}
+function updateLink() {
+  const live = $('live');
+  live.classList.toggle('off', !data);
+  $('s-link').textContent = data ? '在线' : '离线';
+}
+function updateHud() {
+  if (!data) return;
+  const c = data.counts || {};
+  $('m-atoms').textContent = c.atoms ?? c.memories ?? '--';
+  $('m-scenes').textContent = c.scenes ?? '--';
+  $('m-persona').textContent = c.personas ?? '--';
+  $('m-nodes').textContent = c.nodes ?? '--';
+  $('m-edges').textContent = c.edges ?? '--';
+  $('m-dead').textContent = c.dead ?? '--';
+  $('m-hash').textContent = (data.graphHash || '').slice(0, 12) || '--';
+  $('m-built').textContent = (data.cortexBuiltAt || '').replace(/^20/, '');
+  $('s-atoms').textContent = c.atoms ?? c.memories ?? '--';
+  const setBar = (id, value, max) => {
+    const el = $(id);
+    if (el) el.style.width = Math.max(2, Math.min(100, (value / max) * 100)) + '%';
+  };
+  setBar('b-atoms', c.atoms || 0, 400);
+  setBar('b-scenes', c.scenes || 0, 40);
+  setBar('b-persona', c.personas || 0, 20);
+  setBar('b-nodes', c.nodes || 0, 40);
+  $('s-cpu').textContent = Math.round((data.system?.cpuPct || 0) * 100) + '%';
+  updateLink();
+}
+
+function renderPartitions() {
+  if (!data) return;
+  const counts = new Map();
+  for (const memory of data.memories || []) {
+    counts.set(memory.nodeId, (counts.get(memory.nodeId) || 0) + 1);
+  }
+  const rows = [...(data.nodes || [])].sort((a, b) => (counts.get(b.id) || 0) - (counts.get(a.id) || 0)).slice(0, 8);
+  const max = Math.max(1, ...rows.map((node) => counts.get(node.id) || 0));
+  $('partitions').innerHTML = rows.map((node) => {
+    const value = counts.get(node.id) || 0;
+    const width = Math.max(6, (value / max) * 100);
+    return `<div class="part ${focusNodeId === node.id ? 'on' : ''}" data-node="${node.id}">
+      <span class="n">${escapeHtml(node.name)}</span>
+      <span class="bar"><i style="width:${width}%"></i></span>
+      <span class="c">${value}</span>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.part').forEach((row) => {
+    row.addEventListener('click', () => {
+      const id = Number(row.dataset.node);
+      focusNodeId = focusNodeId === id ? null : id;
+      $('rr-focus').textContent = focusNodeId ? 'FOCUS' : 'ALL';
+      renderPartitions();
+      clientEvent(focusNodeId ? 'PARTITION FOCUS · ' + row.querySelector('.n').textContent : 'PARTITION FOCUS CLEARED', 'dim');
+    });
+  });
+}
+
+function renderLegend() {
+  if (!data) return;
+  const kinds = Object.entries(data.kindCount || {}).sort((a, b) => b[1] - a[1]);
+  $('legend').innerHTML = kinds.map(([kind, count]) => {
+    const color = KIND_RGB[kind] ? `rgb(${KIND_RGB[kind].join(',')})` : 'rgb(160,220,210)';
+    return `<span class="chip ${hiddenKinds.has(kind) ? 'off' : ''}" data-kind="${kind}" style="color:${color}">
+      <i></i>${KIND_CN[kind] || kind} ${count}
+    </span>`;
+  }).join('');
+  document.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const kind = chip.dataset.kind;
+      if (hiddenKinds.has(kind)) hiddenKinds.delete(kind); else hiddenKinds.add(kind);
+      renderLegend();
+      clientEvent('SIGNAL FILTER · ' + (hiddenKinds.has(kind) ? 'HIDE ' : 'SHOW ') + kind.toUpperCase(), 'dim');
+    });
+  });
+}
+
+/* ───────────── 数据拉取 ───────────── */
+async function pull() {
+  try {
+    const response = await fetch('/api/snapshot', { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const next = await response.json();
+    const signature = `${next.graphHash}|${next.counts?.memories}|${next.counts?.edges}`;
+    data = next;
+    if (signature !== currentSignature) {
+      currentSignature = signature;
+      buildGalaxy(next);
+      renderPartitions();
+      renderLegend();
+      clientEvent('图谱重建 · ' + next.counts.memories + ' 个原子', 'ok');
+    }
+    updateHud();
+    updateLog();
+    drawAllPanels();
+  } catch (error) {
+    if (data) {
+      data = null;
+      updateLink();
+      clientEvent('数据链路中断', 'warn');
+    }
+  }
+}
+
+/* ───────────── 每帧更新 ───────────── */
+function updateWarp(dt) {
+  const speedFactor = mode === 1 ? 2.8 : 1;
+  const positions = warpGeo.attributes.position.array;
+  for (let i = 0; i < WARP_COUNT; i += 1) {
+    // 一拍过去星流窜一下。给的是速度，不是亮度 —— 看着像爆发，不像闪。
+    warpRadius[i] += warpSpeed[i] * dt * speedFactor * (1 + beatGlow * 0.9);
+    if (warpRadius[i] > 42) resetWarp(i, false);
+    const r = warpRadius[i];
+    const trail = mode === 1 ? 2.6 + warpSpeed[i] * 1.15 : 0.5 + warpSpeed[i] * 0.14;
+    const tail = Math.max(0.35, r - trail);
+    const p = i * 6;
+    positions[p] = warpDir[i * 3] * r;
+    positions[p + 1] = warpDir[i * 3 + 1] * r;
+    positions[p + 2] = warpDir[i * 3 + 2] * r;
+    positions[p + 3] = warpDir[i * 3] * tail;
+    positions[p + 4] = warpDir[i * 3 + 1] * tail;
+    positions[p + 5] = warpDir[i * 3 + 2] * tail;
+  }
+  warpGeo.attributes.position.needsUpdate = true;
+}
+
+function updateGalaxy(dt) {
+  const targetGalaxy = [1, 0.16, 1][mode];
+  galaxyOpacity += (targetGalaxy - galaxyOpacity) * Math.min(1, dt * 3);
+  // 隧道模式原本 0.7，密到把左边 KPI 整块盖掉。压到 0.42 才留得住 HUD。
+  const targetTunnel = [0.1, 0.42, 0.04][mode];
+  tunnelOpacity += (targetTunnel - tunnelOpacity) * Math.min(1, dt * 3);
+  const targetEdge = [0.17, 0.06, 0.52][mode];
+  edgeOpacity += (targetEdge - edgeOpacity) * Math.min(1, dt * 3);
+
+  ringMat.opacity = tunnelOpacity;
+  // 星团/关系网里曲速线只做底噪，压淡；隧道理所当然要炸
+  warpMat.opacity = mode === 1 ? 0.05 : 0.05 + tunnelOpacity * 0.9;
+
+  // 门环只在隧道模式显形，并且随「推进」前后错相呼吸
+  gateGroup.visible = mode === 1;
+  if (mode === 1) {
+    for (let i = 0; i < gates.length; i += 1) {
+      const g = gates[i];
+      const ph = (time * 0.55 + i * 0.42) % (Math.PI * 2);
+      g.material.opacity = 0.30 + 0.55 * (0.5 + 0.5 * Math.sin(ph));
+      g.rotation.z = time * (0.10 + i * 0.014);
+      const k = 1 + Math.sin(ph) * 0.03;
+      g.scale.set(k, k, 1);
+    }
+  }
+  diskMat.opacity = [0.58, 0.45, 0.24][mode];
+  diskMat.size = mode === 1 ? 0.085 : 0.065;
+
+  for (const line of edgeLines) line.material.opacity = edgeOpacity;
+
+  for (const sprite of memorySprites) {
+    const memory = sprite.userData.memory;
+    const hidden = hiddenKinds.has(memory.kind || 'unknown');
+    const focused = focusNodeId === null || memory.nodeId === focusNodeId;
+    const base = sprite.userData.baseOpacity;
+    sprite.material.opacity = hidden || !focused ? base * 0.07 : base * galaxyOpacity;
+    sprite.visible = !hidden;
+  }
+  const labelBase = [0.32 + galaxyOpacity * 0.36, 0.04, 0.8][mode];
+  for (const sprite of labelSprites) {
+    const focused = focusNodeId === null || focusNodeId === sprite.userData.nodeId;
+    sprite.material.opacity = focused ? labelBase : labelBase * 0.16;
+  }
+  for (const sprite of nodeSprites) {
+    const focused = focusNodeId === null || focusNodeId === sprite.userData.node.id;
+    sprite.material.opacity = focused ? 0.95 : 0.12;
+    if (sprite.userData.halo) sprite.userData.halo.material.opacity = focused ? 0.15 : 0.02;
+  }
+
+  for (let i = 0; i < pulseSprites.length; i += 1) {
+    const pulse = pulseState[i];
+    pulse.t += pulse.speed * dt * (mode === 2 ? 1.5 : 1);
+    if (pulse.t > 1) {
+      pulse.t = 0;
+      pulse.curve = edgeCurves[Math.floor(Math.random() * edgeCurves.length)];
+    }
+    if (pulse.curve) {
+      pulseSprites[i].position.copy(pulse.curve.getPoint(pulse.t));
+      pulseSprites[i].material.opacity = (0.55 + 0.45 * Math.sin(pulse.t * Math.PI)) * galaxyOpacity;
+    }
+  }
+
+  if (selectedSprite) {
+    const s = selectedSprite.userData.baseScaleVec;
+    const pulse = 1 + 0.35 * Math.sin(time * 5);
+    selectedSprite.scale.set(s.x * pulse, s.y * pulse, 1);
+  }
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  time += dt;
+  frames += 1;
+  updateBeat(dt);
+  updateCamera(dt);
+  updateWarp(dt);
+  updateGalaxy(dt);
+  updateShockRings(dt);
+  updateStreams(dt);
+  updateArcs(dt);
+  fireArcTick(dt);
+  updateHover();
+
+  // 中心球放电会瞬间把核心点亮，那一晃是这一层最抓眼的地方
+  coreFlash = Math.max(0, coreFlash - dt * 4.6);
+  // 节拍只负责轻轻鼓一下，幅度压到原来四成；推进感交给延迟包络去接
+  const flashK = 1 + coreFlash * 0.62 + beatEnv * 0.10;
+  coreHalo.scale.setScalar((3.8 + Math.sin(time * 1.3) * 0.34 + beatEnv * 0.30) * flashK);
+  coreHot.scale.setScalar((1.45 + Math.sin(time * 2.1) * 0.14 + beatEnv * 0.11) * flashK);
+  // 核心别给死白：压一点红、留回青，才是这颗星炬该有的冷
+  coreBall.material.color.setRGB(0.80 + coreFlash * 0.20, 0.94, 1.0);
+  coreHalo.material.opacity = Math.min(1, 0.75 + Math.sin(time * 1.3) * 0.1 + coreFlash * 0.45 + beatEnv * 0.11);
+  core.rotation.z = time * 0.06;
+  rings.forEach((ring, index) => {
+    ring.rotation.z = time * (0.18 + index * 0.07);
+    ring.rotation.y += dt * (0.12 + index * 0.04);
+  });
+  holoShell.rotation.x = time * 0.11;
+  holoShell.rotation.y = time * 0.17;
+  holoShell2.rotation.x = -time * 0.07;
+  holoShell2.rotation.z = time * 0.09;
+  flareH.material.opacity = 0.42 + Math.sin(time * 1.7) * 0.1 + beatGlow * 0.12;
+  flareH.scale.x = 19 + Math.sin(time * 1.1) * 2.2 + beatGlow * 1.6;
+  flareV.material.opacity = 0.18 + Math.sin(time * 2.3 + 1) * 0.05 + beatGlow * 0.05;
+  disk.rotation.y = time * (mode === 1 ? 0.16 : 0.045);
+  disk.rotation.x = 0.06 + Math.sin(time * 0.18) * 0.025;
+  belt.rotation.y = -time * 0.012;
+  // 环上流光：一拍过去集体加一次速，明暗随位置变化，像在轨道上轮流点火
+  for (const spark of beltRunners) {
+    spark.userData.a += dt * spark.userData.sp * (1 + beatGlow * 1.6);
+    const rr = spark.userData.r;
+    spark.position.set(Math.cos(spark.userData.a) * rr, 0, Math.sin(spark.userData.a) * rr);
+    const shimmer = 0.5 + 0.5 * Math.sin(spark.userData.a * 5 + spark.userData.ph);
+    spark.material.opacity = spark.userData.base * (0.35 + 0.65 * shimmer + beatGlow * 0.5) * Math.max(0.18, galaxyOpacity);
+  }
+  tiltedOrbit.rotation.z = time * 0.02;
+  for (const sprite of nebulae) {
+    sprite.material.opacity = sprite.userData.baseOpacity * (0.78 + Math.sin(time * 0.22 + sprite.userData.phase) * 0.22 + beatHalo * 0.12);
+  }
+  ringLines.rotation.z = time * 0.035 + beatKick * 0.012;
+  ringLines.rotation.x = Math.sin(time * 0.12) * 0.06;
+  stars.rotation.y = time * 0.004;
+
+  updateFx(dt);
+  renderer.render(scene, camera);
+
+  if (performance.now() - fpsAt > 600) {
+    fps = Math.round((frames * 1000) / (performance.now() - fpsAt));
+    frames = 0;
+    fpsAt = performance.now();
+    $('s-fps').textContent = fps;
+  }
+  panelTimer += dt;
+  if (panelTimer > 0.12) {
+    panelTimer = 0;
+    drawAllPanels();
+  }
+}
+
+/* ───────────── 尺寸 ───────────── */
+function resize() {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  resizeFx();
+  fitPanels();
+  drawAllPanels();
+}
+window.addEventListener('resize', resize);
+
+/* ───────────── 键盘 ───────────── */
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (key === '1' || key === '2' || key === '3') setMode(Number(key) - 1);
+  else if (key === 'h') {
+    document.body.classList.toggle('cinema');
+    setTimeout(resize, 80);
+  } else if (key === 'r') {
+    pull();
+    clientEvent('MANUAL REFRESH', 'dim');
+  } else if (key === 'escape') {
+    closeDetail();
+  }
+});
+
+/* ───────────── 启动 ───────────── */
+resize();
+updateCamera(0);
+buildGalaxyFallback();
+pull();
+setInterval(pull, 3000);
+setInterval(() => {
+  const now = new Date();
+  $('s-clock').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+}, 1000);
+requestAnimationFrame(animate);
+
+function buildGalaxyFallback() {
+  buildGalaxy({ nodes: [], memories: [], edges: [] });
+}
+
+window.__AGENT_OPS__ = {
+  get fps() { return fps; },
+  get beat() { return beatEnv; },        // 节拍包络 0→1，指数衰减
+  get beatCount() { return beatN; },     // 已经过了几拍
+  get arcsLive() { return arcs.filter((a) => a.active).length; },
+  get mode() { return mode; },
+  get data() { return data; },
+  setMode,
+  get selected() { return selectedMemory; },
+  get counts() { return data ? data.counts : null; },
+  get spriteCount() { return memorySprites.length; },
+  get pulseCount() { return pulseSprites.length; },
+  get streamCount() { return streamSprites.length; },
+  projectMemory(index = 0) {
+    const sprite = memorySprites[index];
+    if (!sprite) return null;
+    const v = sprite.position.clone().project(camera);
+    return {
+      x: (v.x * 0.5 + 0.5) * window.innerWidth,
+      y: (-v.y * 0.5 + 0.5) * window.innerHeight,
+      visible: v.z < 1,
+      id: sprite.userData.memory?.id,
+    };
+  },
+};
+</script>
+</body>
+</html>

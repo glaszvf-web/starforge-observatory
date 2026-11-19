@@ -1,0 +1,912 @@
+{
+  "nodes": [
+    {
+      "id": 1,
+      "name": "项目节奏",
+      "type": "topic",
+      "degree": 5,
+      "layer7": "project",
+      "section": "项目节奏 · 里程碑与交付",
+      "iso": false
+    },
+    {
+      "id": 2,
+      "name": "工具链",
+      "type": "skill",
+      "degree": 4,
+      "layer7": "project",
+      "section": "工具链 · 本地优先",
+      "iso": false
+    },
+    {
+      "id": 3,
+      "name": "视觉规范",
+      "type": "skill",
+      "degree": 5,
+      "layer7": "project",
+      "section": "视觉规范 · 深色与光效",
+      "iso": false
+    },
+    {
+      "id": 4,
+      "name": "交互设计",
+      "type": "skill",
+      "degree": 3,
+      "layer7": "project",
+      "section": "交互设计 · 可读优先",
+      "iso": false
+    },
+    {
+      "id": 5,
+      "name": "验证方法",
+      "type": "topic",
+      "degree": 4,
+      "layer7": "lesson",
+      "section": "验证方法 · 自动化验收",
+      "iso": false
+    },
+    {
+      "id": 6,
+      "name": "数据接口",
+      "type": "skill",
+      "degree": 3,
+      "layer7": "project",
+      "section": "数据接口 · 只读快照",
+      "iso": false
+    },
+    {
+      "id": 7,
+      "name": "工作流规则",
+      "type": "topic",
+      "degree": 4,
+      "layer7": "rules",
+      "section": "工作流规则 · 先诊断再重试",
+      "iso": false
+    },
+    {
+      "id": 8,
+      "name": "复盘记录",
+      "type": "topic",
+      "degree": 4,
+      "layer7": "lesson",
+      "section": "复盘记录 · 踩坑与修正",
+      "iso": false
+    }
+  ],
+  "edges": [
+    {
+      "src": 1,
+      "dst": 2,
+      "kind": "cooccur",
+      "label": "项目主线",
+      "weight": 0.62
+    },
+    {
+      "src": 1,
+      "dst": 3,
+      "kind": "cooccur",
+      "label": "项目主线",
+      "weight": 0.58
+    },
+    {
+      "src": 1,
+      "dst": 7,
+      "kind": "supports",
+      "label": "工作流",
+      "weight": 0.74
+    },
+    {
+      "src": 2,
+      "dst": 3,
+      "kind": "cooccur",
+      "label": "实现层",
+      "weight": 0.49
+    },
+    {
+      "src": 2,
+      "dst": 6,
+      "kind": "supports",
+      "label": "实现层",
+      "weight": 0.67
+    },
+    {
+      "src": 3,
+      "dst": 4,
+      "kind": "supports",
+      "label": "体验层",
+      "weight": 0.71
+    },
+    {
+      "src": 3,
+      "dst": 7,
+      "kind": "cooccur",
+      "label": "工作流",
+      "weight": 0.44
+    },
+    {
+      "src": 4,
+      "dst": 5,
+      "kind": "supports",
+      "label": "体验层",
+      "weight": 0.53
+    },
+    {
+      "src": 4,
+      "dst": 8,
+      "kind": "cooccur",
+      "label": "体验层",
+      "weight": 0.38
+    },
+    {
+      "src": 5,
+      "dst": 7,
+      "kind": "supports",
+      "label": "质量",
+      "weight": 0.81
+    },
+    {
+      "src": 5,
+      "dst": 8,
+      "kind": "cooccur",
+      "label": "质量",
+      "weight": 0.64
+    },
+    {
+      "src": 6,
+      "dst": 7,
+      "kind": "supports",
+      "label": "实现层",
+      "weight": 0.57
+    },
+    {
+      "src": 1,
+      "dst": 5,
+      "kind": "supports",
+      "label": "项目主线",
+      "weight": 0.69
+    },
+    {
+      "src": 2,
+      "dst": 8,
+      "kind": "cooccur",
+      "label": "实现层",
+      "weight": 0.35
+    },
+    {
+      "src": 3,
+      "dst": 6,
+      "kind": "cooccur",
+      "label": "实现层",
+      "weight": 0.42
+    },
+    {
+      "src": 1,
+      "dst": 8,
+      "kind": "cooccur",
+      "label": "项目主线",
+      "weight": 0.46
+    }
+  ],
+  "memories": [
+    {
+      "id": 1,
+      "l1": 1,
+      "h": "demo0001",
+      "nodeId": 1,
+      "text": "把可视化升级拆成数据、场景、交互、验证四段，每段都能单独验收。",
+      "kind": "episode",
+      "importance": 0.92,
+      "created_at": 1793003600,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 2,
+      "l1": 2,
+      "h": "demo0002",
+      "nodeId": 1,
+      "text": "先做能跑的最小场景，再逐层加星尘、星环、连线与冲击波。",
+      "kind": "episode",
+      "importance": 0.88,
+      "created_at": 1793007200,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 3,
+      "l1": 3,
+      "h": "demo0003",
+      "nodeId": 1,
+      "text": "每个里程碑都保留可回退的旧版本页面，方便对照。",
+      "kind": "fact",
+      "importance": 0.71,
+      "created_at": 1793010800,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 4,
+      "l1": 4,
+      "h": "demo0004",
+      "nodeId": 1,
+      "text": "交付前固定跑一次全流程截图，不靠肉眼判断“应该没问题”。",
+      "kind": "episode",
+      "importance": 0.76,
+      "created_at": 1793014400,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 5,
+      "l1": 5,
+      "h": "demo0005",
+      "nodeId": 1,
+      "text": "遇到渲染异常时先定位是数据、材质还是后处理，不盲目重写。",
+      "kind": "episode",
+      "importance": 0.83,
+      "created_at": 1793018000,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 6,
+      "l1": 6,
+      "h": "demo0006",
+      "nodeId": 1,
+      "text": "项目结构按 bin / web / assets / docs 分层，入口文件保持单一。",
+      "kind": "fact",
+      "importance": 0.64,
+      "created_at": 1793021600,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 7,
+      "l1": 7,
+      "h": "demo0007",
+      "nodeId": 1,
+      "text": "把“炫酷”和“看得懂”拆成两条验收线，避免只堆特效。",
+      "kind": "episode",
+      "importance": 0.79,
+      "created_at": 1793025200,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 8,
+      "l1": 8,
+      "h": "demo0008",
+      "nodeId": 1,
+      "text": "演示数据与真实数据分离，公开包只带合成样本。",
+      "kind": "fact",
+      "importance": 0.55,
+      "created_at": 1793028800,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 9,
+      "l1": 9,
+      "h": "demo0009",
+      "nodeId": 1,
+      "text": "每次重构后先看控制台错误，再看帧率和布局。",
+      "kind": "episode",
+      "importance": 0.68,
+      "created_at": 1793032400,
+      "entities": [
+        1
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 10,
+      "l1": 10,
+      "h": "demo0010",
+      "nodeId": 2,
+      "text": "三维场景使用 Three.js，模块文件放在本地，断网也能启动。",
+      "kind": "fact",
+      "importance": 0.86,
+      "created_at": 1793036000,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 11,
+      "l1": 11,
+      "h": "demo0011",
+      "nodeId": 2,
+      "text": "服务端只用 Node 内置 http 模块，避免额外框架依赖。",
+      "kind": "episode",
+      "importance": 0.74,
+      "created_at": 1793039600,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 12,
+      "l1": 12,
+      "h": "demo0012",
+      "nodeId": 2,
+      "text": "静态资源与 API 走同一个本地端口，减少启动步骤。",
+      "kind": "fact",
+      "importance": 0.61,
+      "created_at": 1793043200,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 13,
+      "l1": 13,
+      "h": "demo0013",
+      "nodeId": 2,
+      "text": "图标由 SVG 渲染成多尺寸 PNG，再手工拼成 ICO。",
+      "kind": "episode",
+      "importance": 0.72,
+      "created_at": 1793046800,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 14,
+      "l1": 14,
+      "h": "demo0014",
+      "nodeId": 2,
+      "text": "启动脚本用 UTF-16LE 写入，避免中文路径在 VBS 中乱码。",
+      "kind": "fact",
+      "importance": 0.58,
+      "created_at": 1793050400,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 15,
+      "l1": 15,
+      "h": "demo0015",
+      "nodeId": 2,
+      "text": "工具优先本地化、可离线、可审计，不引入不必要的云端依赖。",
+      "kind": "preference",
+      "importance": 0.81,
+      "created_at": 1793054000,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 16,
+      "l1": 16,
+      "h": "demo0016",
+      "nodeId": 2,
+      "text": "依赖版本固定，升级前先跑一遍冒烟测试。",
+      "kind": "episode",
+      "importance": 0.69,
+      "created_at": 1793057600,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 17,
+      "l1": 17,
+      "h": "demo0017",
+      "nodeId": 2,
+      "text": "开发脚本统一用 .mjs，直接 node 执行，不需要构建步骤。",
+      "kind": "fact",
+      "importance": 0.52,
+      "created_at": 1793061200,
+      "entities": [
+        2
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 18,
+      "l1": 18,
+      "h": "demo0018",
+      "nodeId": 3,
+      "text": "深色底、青绿主色、低饱和辅色，高亮只留给真正重要的信息。",
+      "kind": "preference",
+      "importance": 0.93,
+      "created_at": 1793064800,
+      "entities": [
+        3
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 19,
+      "l1": 19,
+      "h": "demo0019",
+      "nodeId": 3,
+      "text": "光效使用加法混合与径向渐变贴图，避免重型后处理带来的黑帧风险。",
+      "kind": "preference",
+      "importance": 0.89,
+      "created_at": 1793068400,
+      "entities": [
+        3
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 20,
+      "l1": 20,
+      "h": "demo0020",
+      "nodeId": 3,
+      "text": "主视觉由星野、星云、核心、吸积盘、星环五层组成，层次清楚。",
+      "kind": "fact",
+      "importance": 0.77,
+      "created_at": 1793072000,
+      "entities": [
+        3
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 21,
+      "l1": 21,
+      "h": "demo0021",
+      "nodeId": 3,
+      "text": "文字标签保持小而清晰，重要节点用亮度和尺寸区分，不靠花哨字体。",
+      "kind": "preference",
+      "importance": 0.84,
+      "created_at": 1793075600,
+      "entities": [
+        3
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 22,
+      "l1": 22,
+      "h": "demo0022",
+      "nodeId": 3,
+      "text": "颜色映射固定：偏好暖色、经历青色、事实蓝色、自我紫色、反思红色。",
+      "kind": "fact",
+      "importance": 0.66,
+      "created_at": 1793079200,
+      "entities": [
+        3
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 23,
+      "l1": 23,
+      "h": "demo0023",
+      "nodeId": 3,
+      "text": "动效节奏以“呼吸感”为主，避免所有元素同时高速运动。",
+      "kind": "preference",
+      "importance": 0.79,
+      "created_at": 1793082800,
+      "entities": [
+        3
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 24,
+      "l1": 24,
+      "h": "demo0024",
+      "nodeId": 4,
+      "text": "悬停只做轻量反馈，点击才展开完整信息，减少界面噪音。",
+      "kind": "preference",
+      "importance": 0.87,
+      "created_at": 1793086400,
+      "entities": [
+        4
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 25,
+      "l1": 25,
+      "h": "demo0025",
+      "nodeId": 4,
+      "text": "详情卡打开时隐藏悬停浮层，避免两层信息互相遮挡。",
+      "kind": "episode",
+      "importance": 0.75,
+      "created_at": 1793090000,
+      "entities": [
+        4
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 26,
+      "l1": 26,
+      "h": "demo0026",
+      "nodeId": 4,
+      "text": "提供键盘快捷键：1/2/3 切形态，H 影院模式，R 刷新。",
+      "kind": "preference",
+      "importance": 0.82,
+      "created_at": 1793093600,
+      "entities": [
+        4
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 27,
+      "l1": 27,
+      "h": "demo0027",
+      "nodeId": 4,
+      "text": "交互的第一目标是让用户知道“现在看到的是什么”，其次才是惊喜。",
+      "kind": "reflection",
+      "importance": 0.91,
+      "created_at": 1793097200,
+      "entities": [
+        4
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 28,
+      "l1": 28,
+      "h": "demo0028",
+      "nodeId": 4,
+      "text": "分区聚焦时其余元素降到低透明度，而不是直接消失，保留空间感。",
+      "kind": "episode",
+      "importance": 0.63,
+      "created_at": 1793100800,
+      "entities": [
+        4
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 29,
+      "l1": 29,
+      "h": "demo0029",
+      "nodeId": 5,
+      "text": "用 Playwright 无头浏览器加载页面，检查 WebGL、控制台、溢出与关键交互。",
+      "kind": "episode",
+      "importance": 0.9,
+      "created_at": 1793104400,
+      "entities": [
+        5
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 30,
+      "l1": 30,
+      "h": "demo0030",
+      "nodeId": 5,
+      "text": "软件渲染环境需要 SwiftShader 参数，否则 WebGL 可能直接黑屏。",
+      "kind": "fact",
+      "importance": 0.78,
+      "created_at": 1793108000,
+      "entities": [
+        5
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 31,
+      "l1": 31,
+      "h": "demo0031",
+      "nodeId": 5,
+      "text": "截图验收覆盖 1600×900 与 1366×768 两种窗口，确认没有横向滚动。",
+      "kind": "episode",
+      "importance": 0.73,
+      "created_at": 1793111600,
+      "entities": [
+        5
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 32,
+      "l1": 32,
+      "h": "demo0032",
+      "nodeId": 5,
+      "text": "测试结果写入表格：数据量、WebGL 版本、报错数、溢出、交互状态。",
+      "kind": "fact",
+      "importance": 0.69,
+      "created_at": 1793115200,
+      "entities": [
+        5
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 33,
+      "l1": 33,
+      "h": "demo0033",
+      "nodeId": 5,
+      "text": "修复一个问题后重跑整套检查，避免修好 A 弄坏 B。",
+      "kind": "episode",
+      "importance": 0.81,
+      "created_at": 1793118800,
+      "entities": [
+        5
+      ],
+      "layer7": "lesson",
+      "dead": true
+    },
+    {
+      "id": 34,
+      "l1": 34,
+      "h": "demo0034",
+      "nodeId": 6,
+      "text": "快照接口只读，返回 counts、nodes、edges、memories、matrix、waveform 与 system。",
+      "kind": "fact",
+      "importance": 0.85,
+      "created_at": 1793122400,
+      "entities": [
+        6
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 35,
+      "l1": 35,
+      "h": "demo0035",
+      "nodeId": 6,
+      "text": "记忆正文只截取前 96 个字符，详情面板按需展示，减少单次传输体积。",
+      "kind": "fact",
+      "importance": 0.7,
+      "created_at": 1793126000,
+      "entities": [
+        6
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 36,
+      "l1": 36,
+      "h": "demo0036",
+      "nodeId": 6,
+      "text": "数据按文件修改时间缓存，文件没变就不重复解析 JSON。",
+      "kind": "episode",
+      "importance": 0.67,
+      "created_at": 1793129600,
+      "entities": [
+        6
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 37,
+      "l1": 37,
+      "h": "demo0037",
+      "nodeId": 6,
+      "text": "前端每 3 秒轮询一次快照，断线显示 OFFLINE，恢复后自动重建场景。",
+      "kind": "fact",
+      "importance": 0.59,
+      "created_at": 1793133200,
+      "entities": [
+        6
+      ],
+      "layer7": "project",
+      "dead": false
+    },
+    {
+      "id": 38,
+      "l1": 38,
+      "h": "demo0038",
+      "nodeId": 7,
+      "text": "工具调用失败两次后停下来换策略，先诊断根因再继续。",
+      "kind": "episode",
+      "importance": 0.88,
+      "created_at": 1793136800,
+      "entities": [
+        7
+      ],
+      "layer7": "rules",
+      "dead": false
+    },
+    {
+      "id": 39,
+      "l1": 39,
+      "h": "demo0039",
+      "nodeId": 7,
+      "text": "执行任务时优先交付可运行成品，方案必须落到文件和验证上。",
+      "kind": "self",
+      "importance": 0.92,
+      "created_at": 1793140400,
+      "entities": [
+        7
+      ],
+      "layer7": "rules",
+      "dead": false
+    },
+    {
+      "id": 40,
+      "l1": 40,
+      "h": "demo0040",
+      "nodeId": 7,
+      "text": "修改已有文件前先读上下文，只做最小必要变更。",
+      "kind": "preference",
+      "importance": 0.86,
+      "created_at": 1793144000,
+      "entities": [
+        7
+      ],
+      "layer7": "rules",
+      "dead": false
+    },
+    {
+      "id": 41,
+      "l1": 41,
+      "h": "demo0041",
+      "nodeId": 7,
+      "text": "危险操作先确认，删除优先进回收站，不直接彻底删除。",
+      "kind": "episode",
+      "importance": 0.77,
+      "created_at": 1793147600,
+      "entities": [
+        7
+      ],
+      "layer7": "rules",
+      "dead": false
+    },
+    {
+      "id": 42,
+      "l1": 42,
+      "h": "demo0042",
+      "nodeId": 7,
+      "text": "遇到不确定的信息要明确说出来，不编造结果。",
+      "kind": "self",
+      "importance": 0.9,
+      "created_at": 1793151200,
+      "entities": [
+        7
+      ],
+      "layer7": "rules",
+      "dead": false
+    },
+    {
+      "id": 43,
+      "l1": 43,
+      "h": "demo0043",
+      "nodeId": 7,
+      "text": "公开资产与私人记录严格分层，公开包发布前必须跑隐私扫描。",
+      "kind": "episode",
+      "importance": 0.71,
+      "created_at": 1793154800,
+      "entities": [
+        7
+      ],
+      "layer7": "rules",
+      "dead": false
+    },
+    {
+      "id": 44,
+      "l1": 44,
+      "h": "demo0044",
+      "nodeId": 8,
+      "text": "脉冲 Sprite 未清理导致重建后不断累积，修复方式是在构建入口清空数组。",
+      "kind": "episode",
+      "importance": 0.84,
+      "created_at": 1793158400,
+      "entities": [
+        8
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 45,
+      "l1": 45,
+      "h": "demo0045",
+      "nodeId": 8,
+      "text": "悬停缩放基准被重复放大，修复方式是构建时保存 baseScaleVec。",
+      "kind": "episode",
+      "importance": 0.79,
+      "created_at": 1793162000,
+      "entities": [
+        8
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 46,
+      "l1": 46,
+      "h": "demo0046",
+      "nodeId": 8,
+      "text": "面板重绘依赖时间取整会在低帧率下失灵，改为 120ms 累加器。",
+      "kind": "fact",
+      "importance": 0.62,
+      "created_at": 1793165600,
+      "entities": [
+        8
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 47,
+      "l1": 47,
+      "h": "demo0047",
+      "nodeId": 8,
+      "text": "后期泛光在部分环境出现黑帧，改用加法混合光晕精灵替代。",
+      "kind": "episode",
+      "importance": 0.76,
+      "created_at": 1793169200,
+      "entities": [
+        8
+      ],
+      "layer7": "lesson",
+      "dead": false
+    },
+    {
+      "id": 48,
+      "l1": 48,
+      "h": "demo0048",
+      "nodeId": 8,
+      "text": "复盘要写清“现象、根因、修复、验证”，只写结论没有复用价值。",
+      "kind": "self",
+      "importance": 0.83,
+      "created_at": 1793172800,
+      "entities": [
+        8
+      ],
+      "layer7": "lesson",
+      "dead": false
+    }
+  ]
+}

@@ -1,0 +1,290 @@
+[
+  {
+    "id": "s01",
+    "key": "demo::1",
+    "title": "项目节奏",
+    "layer7": "project",
+    "layer7Name": "项目与基建",
+    "itemIds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "count": 9,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 1,
+        "title": "演示条目 1",
+        "heat": 1
+      },
+      {
+        "id": 2,
+        "title": "演示条目 2",
+        "heat": 1
+      },
+      {
+        "id": 3,
+        "title": "演示条目 3",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  },
+  {
+    "id": "s02",
+    "key": "demo::2",
+    "title": "工具链",
+    "layer7": "project",
+    "layer7Name": "项目与基建",
+    "itemIds": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "count": 8,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 10,
+        "title": "演示条目 10",
+        "heat": 1
+      },
+      {
+        "id": 11,
+        "title": "演示条目 11",
+        "heat": 1
+      },
+      {
+        "id": 12,
+        "title": "演示条目 12",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  },
+  {
+    "id": "s03",
+    "key": "demo::3",
+    "title": "视觉规范",
+    "layer7": "project",
+    "layer7Name": "项目与基建",
+    "itemIds": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "count": 6,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 18,
+        "title": "演示条目 18",
+        "heat": 1
+      },
+      {
+        "id": 19,
+        "title": "演示条目 19",
+        "heat": 1
+      },
+      {
+        "id": 20,
+        "title": "演示条目 20",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  },
+  {
+    "id": "s04",
+    "key": "demo::4",
+    "title": "交互设计",
+    "layer7": "project",
+    "layer7Name": "项目与基建",
+    "itemIds": [
+      24,
+      25,
+      26,
+      27,
+      28
+    ],
+    "count": 5,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 24,
+        "title": "演示条目 24",
+        "heat": 1
+      },
+      {
+        "id": 25,
+        "title": "演示条目 25",
+        "heat": 1
+      },
+      {
+        "id": 26,
+        "title": "演示条目 26",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  },
+  {
+    "id": "s05",
+    "key": "demo::5",
+    "title": "验证方法",
+    "layer7": "lesson",
+    "layer7Name": "复盘与教训",
+    "itemIds": [
+      29,
+      30,
+      31,
+      32,
+      33
+    ],
+    "count": 5,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 29,
+        "title": "演示条目 29",
+        "heat": 1
+      },
+      {
+        "id": 30,
+        "title": "演示条目 30",
+        "heat": 1
+      },
+      {
+        "id": 31,
+        "title": "演示条目 31",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  },
+  {
+    "id": "s06",
+    "key": "demo::6",
+    "title": "数据接口",
+    "layer7": "project",
+    "layer7Name": "项目与基建",
+    "itemIds": [
+      34,
+      35,
+      36,
+      37
+    ],
+    "count": 4,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 34,
+        "title": "演示条目 34",
+        "heat": 1
+      },
+      {
+        "id": 35,
+        "title": "演示条目 35",
+        "heat": 1
+      },
+      {
+        "id": 36,
+        "title": "演示条目 36",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  },
+  {
+    "id": "s07",
+    "key": "demo::7",
+    "title": "工作流规则",
+    "layer7": "rules",
+    "layer7Name": "规则与契约",
+    "itemIds": [
+      38,
+      39,
+      40,
+      41,
+      42,
+      43
+    ],
+    "count": 6,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 38,
+        "title": "演示条目 38",
+        "heat": 1
+      },
+      {
+        "id": 39,
+        "title": "演示条目 39",
+        "heat": 1
+      },
+      {
+        "id": 40,
+        "title": "演示条目 40",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  },
+  {
+    "id": "s08",
+    "key": "demo::8",
+    "title": "复盘记录",
+    "layer7": "lesson",
+    "layer7Name": "复盘与教训",
+    "itemIds": [
+      44,
+      45,
+      46,
+      47,
+      48
+    ],
+    "count": 5,
+    "maxHeat": 1,
+    "latest": "2026-11-06",
+    "top": [
+      {
+        "id": 44,
+        "title": "演示条目 44",
+        "heat": 1
+      },
+      {
+        "id": 45,
+        "title": "演示条目 45",
+        "heat": 1
+      },
+      {
+        "id": 46,
+        "title": "演示条目 46",
+        "heat": 1
+      }
+    ],
+    "avgHeat": 0.78
+  }
+]

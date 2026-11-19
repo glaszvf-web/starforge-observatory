@@ -1,0 +1,22 @@
+{
+  "builtAt": "2026-11-06 12:00:00",
+  "source": {
+    "file": "demo.md",
+    "chars": 4096,
+    "lines": 72,
+    "sha1": "0000000000000000000000000000000000000000"
+  },
+  "mapping": {
+    "mapped": 48,
+    "unmapped": 0,
+    "unmappedIds": []
+  },
+  "canvases": [
+    {
+      "id": "demo-canvas",
+      "canvas": "demo/canvas.md",
+      "refs": 6
+    }
+  ],
+  "rule": "L0 是原文与卸载日志；L1 每条带 l0.file / l0.line，可回到具体一行。"
+}
