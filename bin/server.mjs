@@ -20,13 +20,13 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const WEB = path.join(ROOT, 'web');
 // 数据目录：DSH_MEMORY_DIR 是正式名字（README 一直这么写的）；
-// LEGACY_MEMORY_DIR 是早期版本留下的旧名，留着兼容，但不要再写进文档。
+// TIANXI_MEMORY_DIR 是搬过来之前的旧名，留着兼容，但不要再写进文档。
 // 都没设时回落到本工程自己的 data/，别再指去别人的目录。
 const MEMORY = process.env.DSH_MEMORY_DIR
-  || process.env.LEGACY_MEMORY_DIR
+  || process.env.TIANXI_MEMORY_DIR
   || path.join(ROOT, 'data');
 const DEMO = path.join(ROOT, 'demo');
-const USING_DEMO = process.env.ORBIT_DEMO === '1' || !fs.existsSync(MEMORY);
+const USING_DEMO = process.env.TIANXI_DEMO === '1' || !fs.existsSync(MEMORY);
 const SOURCE = USING_DEMO ? DEMO : MEMORY;
 
 const APP = 'starforge-observatory';

@@ -4,7 +4,7 @@
 
 ## 这是怎么来的
 
-骨架来自同一作者的早期实现（Three.js + FogExp2 体积雾 + 实体几何），整套搬过来后改造。
+骨架来自天禧那边的 `agent-ops-lab`（Three.js + FogExp2 体积雾 + 实体几何），整套搬过来改的。
 我原本自己写了一套「WebGL 全屏光线步进 + 屏幕空间粒子」，改到第 17 轮还是被评价成一坨答辩 ——
 **教训记在 `~/.dsh/memory/MEMORY.md` 的 2026-11-06 那节：有成熟实现就整套搬，别自己发明第二套骨架。**
 
@@ -41,14 +41,14 @@ agent-ops/
 
 ## 开
 
-直接跑 `bin\launch.ps1`（Windows）或手动起服务。
-停：`bin\stop.ps1`。
+双击桌面 `爱弥斯的纸飞机\星炬观测站\星炬观测站.lnk`（冷启动约 2.4 秒）。
+停：同目录 `停止星炬.lnk`。
 
 手动：
 
 ```powershell
-cd <本目录>
-$env:DSH_MEMORY_DIR = "$PSScriptRoot\..\data"
+cd E:\21289\DSH\observatory\agent-ops
+$env:DSH_MEMORY_DIR = "E:\21289\DSH\observatory\agent-ops\data"
 node bin\build-graph.mjs
 node bin\server.mjs --port 8900
 ```
@@ -79,8 +79,18 @@ node bin\server.mjs --port 8900
 ## 文档
 
 - **`docs/GUIDE.md`** —— 改造指南，写给下一个接手的人或别的 AI。包含三个形态的实现要点、11 条踩坑记录、常见改动怎么做。**动手改之前先读这份。**
-- `docs/screens/` —— 三个形态的成品截图。
+
+## 视觉上是怎么做出来的
+
+几个关键决定，都写在代码注释里：
+
+- **色调映射用 `ACESFilmicToneMapping`**。原来整个渲染器没设 tone mapping，任何超过 1.0 的亮度直接截断成死白 —— 这是「中心永远糊成一团白饼」的真正原因，跟配色和 bloom 参数都无关。
+- **`UnrealBloomPass(0.55, 0.50, 0.34)`**。阈值 0.22 会让整屏所有亮部都往外晕，看着雾茫茫；0.70 又只剩最亮的几个点会发光。0.34 是两者的中间。
+- **中心是一团粒子，不是球**。球体有明确轮廓，一旦有边就像贴上去的；粒子没有边，只有「越靠中心越密越亮」。
+- **节点用 `InstancedMesh`**，59 个球一次 draw call。贴图 sprite 退居二线只当光晕。
+- **关系线用 `Line2` + 两端顶点色渐变**。`LineBasicMaterial` 的 linewidth 在多数平台被硬写成 1px，调不粗；`Line2` 才是像素单位。
+- **分区按度数分三层**：前 15% 沉到核心圈、中间 40% 排中环、其余甩到外圈并压暗。均匀铺在一个球壳上永远出不来疏密。
 
 ## 一句话
 
-骨架照搬成熟实现，性格自己长（电弧、门环、球面星团、四块活仪表），数据一律接真的。
+骨架照搬成熟实现，性格自己长：球面分层的彩色星团、中心粒子核、两端渐变的关系线、AgX 色调映射加 UnrealBloom。

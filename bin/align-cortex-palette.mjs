@@ -3,7 +3,7 @@
  * align-cortex-palette.mjs — 把记忆皮层的配色对齐到 lumen-gallery 那套设计系统
  *
  * 为什么（2026-11-20）：
- *   收到反馈说「和那几个开源项目的视觉效果差得很远」。去拆了 lumen-gallery 的
+ *   漂泊者说「和那几个开源项目的视觉效果差得很远」。去拆了 lumen-gallery 的
  *   Theme.kt 才发现根本不是「收得不够」—— 是色相整个用错了：
  *     我用  #5eeaff 淡青 / #4A9EFF 蓝     →  它用 #22D3EE 电光青
  *     我用  #ff8fa8 粉                    →  它用 #F472B6 霓虹粉

@@ -43,13 +43,13 @@
       radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 30%, rgba(0,4,7,.58) 76%, rgba(0,2,4,.95) 100%)}
   /* 横纹单独一层：青绿细线要靠 screen 叠才亮，跟暗角不能混在一起 */
   .scanlines{position:fixed;inset:0;pointer-events:none;z-index:2;
-    background:repeating-linear-gradient(0deg, rgba(120,255,220,.024) 0 1px, transparent 1px 3px);
+    background:repeating-linear-gradient(0deg, rgba(120,255,220,.055) 0 1px, transparent 1px 3px);
     mix-blend-mode:screen}
-  .grain{position:fixed;inset:0;pointer-events:none;opacity:.14;z-index:2;
+  .grain{position:fixed;inset:0;pointer-events:none;opacity:.18;z-index:2;
     background-image:radial-gradient(rgba(180,255,235,.5) .5px, transparent .6px);
     background-size:3px 3px;mix-blend-mode:overlay}
-  .scan{position:fixed;left:0;right:0;height:1px;top:0;z-index:3;pointer-events:none;
-    background:linear-gradient(90deg,transparent,rgba(90,255,215,.55),transparent);opacity:.35;
+  .scan{position:fixed;left:0;right:0;height:2px;top:0;z-index:3;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(90,255,215,.75),transparent);opacity:.55;
     animation:scan 7s linear infinite}
   @keyframes scan{0%{transform:translateY(60px)}100%{transform:translateY(100vh)}}
   .sweep{position:fixed;left:50%;top:50%;width:130vmax;height:130vmax;margin:-65vmax 0 0 -65vmax;
@@ -188,7 +188,7 @@
     .dock{grid-template-columns:1fr 1fr;height:150px}
     .panel.log-panel{display:none}
   }
-</style>
+  </style>
 </head>
 <body>
 <canvas id="gl"></canvas>
@@ -305,8 +305,33 @@ addEventListener('unhandledrejection', (e) => {
   window.__ERR__.push('reject: ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
 });
 </script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js"
+  }
+}
+</script>
 <script type="module">
 import * as THREE from './vendor/three/three.module.js';
+// 临时探针：模块顶层任何未捕获异常都写进 document.title，方便一眼定位
+window.addEventListener('error', (e) => {
+  window.__FATAL__ = (e.message || 'unknown') + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno;
+  document.title = 'ERR ' + window.__FATAL__;
+});
+window.addEventListener('unhandledrejection', (e) => {
+  window.__FATAL__ = 'REJ ' + ((e.reason && e.reason.message) || e.reason);
+  document.title = window.__FATAL__;
+});
+import { EffectComposer } from './vendor/three-addons/postprocessing/EffectComposer.js';
+import { RenderPass } from './vendor/three-addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from './vendor/three-addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from './vendor/three-addons/postprocessing/OutputPass.js';
+// Line2：真的能画粗线。LineBasicMaterial 的 linewidth 在大多数平台上是摆设
+// （WebGL 规定只能 1px），所以之前所有连线都细得像头发丝，怎么调都没用。
+import { Line2 } from './vendor/three-addons/lines/Line2.js';
+import { LineGeometry } from './vendor/three-addons/lines/LineGeometry.js';
+import { LineMaterial } from './vendor/three-addons/lines/LineMaterial.js';
 
 const TAU = Math.PI * 2;
 const $ = (id) => document.getElementById(id);
@@ -343,11 +368,54 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x04060f, 1);
+// ★ 2026-11-20：整个渲染器原来没有设 tone mapping —— 线性输出，任何亮度超过 1.0
+//   的像素直接截断成纯白。这就是核心「永远是一块死白的饼」的技术原因，跟配色、
+//   和 bloom 参数都无关，是缺了一整级色调映射。
+//   AgX 比 ACES 更「电影」：高光滚落时保留色彩，白热的地方会偏暖偏黄而不是直接
+//   烧成 #FFFFFF。dioramas 那套引擎也是用 AgX。
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x04060f, 0.0075);
+
+// ★ 2026-11-20：整个场景原来一盏灯都没有 —— 所有 Mesh 只能用 MeshBasicMaterial
+//   平涂，球体看着就是一块塑料片，怎么转都翻不出明暗过渡。核心加一盏点光当主光，
+//   再配一层冷色环境光兜住暗面，节点才可能长成有体积的球而不是剪影。
+// decay 1.7 是物理正确的平方反比近似，但星团半径有 9.2 —— 距离 9 的位置照度只剩
+// 1/40，球全被压成灰石子。降到 1.0 再配距离 60，外圈才能吃到光。
+const coreLight = new THREE.PointLight(0x9fe8ff, 9, 60, 1.0);
+coreLight.position.set(0, 0, 0);
+scene.add(coreLight);
+scene.add(new THREE.AmbientLight(0x2a4a68, 1.1));
 const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 400);
 const clock = new THREE.Clock();
+
+/* ───────────── 后处理：让亮的东西真的发光 ─────────────
+   之前所有「光」都是 Sprite 贴图 + 相加混合假装出来的，本质上还是画在平面上
+   的一块亮斑，边缘是硬的，不会真正溢出到邻近像素。
+   换成 EffectComposer + UnrealBloomPass 之后是屏幕空间辉光：亮度超过阈值的像素
+   向外扩散，星点、连线、核心才会像真的发着光。
+
+   阈值 0.62 是试出来的：再低一点连背景的暗部都开始泛白，整片糊成一团；
+   再高一点只有最亮的核心亮，外围的星点又变成死点。
+
+   ⚠ 注意：GUIDE.md 里记过「UnrealBloomPass 在这台机器上周期性整帧发黑」（两次复现）。
+   这一版先试，如果又黑就退回纯 Sprite 方案 —— 判断方法：页面每隔几秒闪一下黑。 */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  // ★ 2026-11-20：这三个数是照 aemeath-nebula 抄的（我 2026-11 做的另一套，
+  //   那套的星团是柔和发光的云）。原来我用 0.52 / 0.55 / 0.70 —— threshold 0.70
+  //   意味着只有最亮的东西才起辉光，于是每个点都是一颗硬邦邦的亮斑；
+  //   0.22 则几乎全部亮部都在往外晕，点才会连成云。这是「硬」和「柔」的分水岭。
+  0.55,   // strength
+  0.50,   // radius
+  0.34    // threshold ← 0.22 太低，整屏都在往外溢，就是「雾茫茫」的来源
+);
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
 
 /* ───────────── 节拍（全场共享一口气） ─────────────
    原来核心、光晕、星云各有各的正弦频率（1.3 / 2.1 / 1.7 / 2.3 / 0.22），
@@ -463,7 +531,7 @@ function labelTexture(text) {
 
 /* ───────────── 星野 ───────────── */
 const starGeo = new THREE.BufferGeometry();
-const STAR_COUNT = 2400;
+const STAR_COUNT = 900;
 {
   const pos = new Float32Array(STAR_COUNT * 3);
   const col = new Float32Array(STAR_COUNT * 3);
@@ -518,74 +586,277 @@ for (let i = 0; i < 10; i += 1) {
 /* ───────────── 核心 ───────────── */
 const core = new THREE.Group();
 scene.add(core);
+// 核心只留一层柔光当「大气」，尺度收到 2.4 —— 3.8 那个半径盖住了半径 9.2 的
+// 星团三分之一，中心自然糊死。depthTest 打开，让它跟后面的东西有前后关系。
 const coreHalo = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: GLOW, color: 0x67E8F9, transparent: true, opacity: 0.5,
-  blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
+  map: GLOW, color: 0x67E8F9, transparent: true, opacity: 0.34,
+  blending: THREE.AdditiveBlending, depthWrite: false,
 }));
-coreHalo.scale.set(3.8, 3.8, 1);
+coreHalo.scale.set(2.2, 2.2, 1);
 core.add(coreHalo);
-// 原来这层是纯白 opacity:1，叠在 coreHalo 和白球上 —— 三层相加直接把中心烧成
-// 一片死白，周围的星点和连线全被压没了。0.38 是看着「还是最亮，但旁边能看见东西」的位置。
+// 高光点：压到 0.85 尺度，只负责在球体正中烧一个小热点，别让它当主光源
 const coreHot = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: GLOW, color: 0xffffff, transparent: true, opacity: 0.38,
+  map: GLOW, color: 0xffffff, transparent: true, opacity: 0.26,
   blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false,
 }));
-coreHot.scale.set(1.15, 1.15, 1);
+coreHot.scale.set(0.85, 0.85, 1);
 core.add(coreHot);
-// 球体从纯白改淡青白：纯白在暗底上会「顶出去」，淡一档更耐看
-const coreBall = new THREE.Mesh(
-  new THREE.SphereGeometry(0.26, 32, 32),
-  new THREE.MeshBasicMaterial({ color: 0xd9f4ff })
-);
+
+// ★ 2026-11-20 重构：原来这里塞了 4 圈旋转 Torus + 两道横竖光条 + 两层套线框，
+//   九个 additive 图层全设 depthTest:false，彼此不当遮挡 —— 叠出来的就是「一颗
+//   糊死的大白球 + 一圈乱转的椭圆环 + 一道贯穿亮线」。全删。
+//   现在的核心只有三样：实体球（有边、有明暗过渡）、一层柔光、一层极淡的外壳线。
+//   发光交给 bloom 去烧，图层堆得越多越像光污染。
+
+// 核体：两层球做出「有体积」的错觉 —— 内层接近纯白的小球负责被 bloom 抓住，
+// 外层半透明青壳负责给边缘一圈冷色过渡。MeshBasicMaterial 不吃光（场景无灯），
+// 所以明暗只能靠这层透明度差来伪造。
+// ★ 2026-11-20 第二刀：核心原来半径 0.52，星团半径 9.2 —— 一比十八，这在
+//   1440p 屏上只投影出三十几像素，等于画面里根本没有重心。现在放大到 1.9，
+//   让它成为「一颗有体积的星体」，外围星团退成裹着它的碎屑带。
+//   这才是「主体 + 环境」的构图，原来那个是「一堆点中间有个亮点」。
+// ★ 2026-11-20 第三刀：球放大之后暴露了真问题 —— 一个纯色 MeshBasicMaterial
+//   球，放大只是把「一块白」放大，表面没有任何细节，看着像颗塑料珠子。
+//   换成程序化着色器：几个相位不同的正弦叠出等离子体的流动，再加一层菲涅尔
+//   做边缘日冕。零贴图、几十行 GLSL，但表面立刻「活」了。
+const coreMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 }, uFlash: { value: 0 } },
+  vertexShader: `
+    varying vec3 vNormal;
+    varying vec3 vView;
+    varying vec3 vPos;
+    void main() {
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      vNormal = normalize(normalMatrix * normal);
+      vView = normalize(-mv.xyz);
+      vPos = normalize(position);
+      gl_Position = projectionMatrix * mv;
+    }
+  `,
+  fragmentShader: `
+    uniform float uTime;
+    uniform float uFlash;
+    varying vec3 vNormal;
+    varying vec3 vView;
+    varying vec3 vPos;
+    void main() {
+      // 等离子体流动：三组不同频率、不同方向的波叠起来，避免出现规整的条纹
+      float n = sin(vPos.x * 4.1 + uTime * 1.6)
+              + sin(vPos.y * 3.3 - uTime * 1.1)
+              + sin(vPos.z * 5.2 + uTime * 2.3)
+              + sin((vPos.x + vPos.y) * 6.7 - uTime * 3.1);
+      n = n * 0.25 * 0.5 + 0.5;
+
+      // 菲涅尔：视线越贴着球面掠过越亮，做出一圈边缘日冕
+      float fres = pow(1.0 - max(dot(vNormal, vView), 0.0), 2.4);
+
+      vec3 cold = vec3(0.03, 0.15, 0.28);
+      vec3 hot  = vec3(0.40, 0.66, 0.82);
+      vec3 base = mix(cold, hot, clamp(n * 0.62 + 0.28 + uFlash * 0.32, 0.0, 1.0));
+      vec3 rim  = vec3(0.30, 0.74, 0.94) * fres * (1.05 + uFlash * 0.9);
+      gl_FragColor = vec4(base + rim, 1.0);
+    }
+  `,
+});
+const coreBall = new THREE.Mesh(new THREE.SphereGeometry(0.42, 48, 32), coreMat);
 core.add(coreBall);
 
-const rings = [];
-for (let i = 0; i < 4; i += 1) {
-  const radius = 2.4 + i * 1.05;
-  const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(radius, 0.012 + i * 0.004, 6, 220),
-    new THREE.MeshBasicMaterial({
-      color: i % 2 ? 0x22D3EE : 0xA5F3FC, transparent: true,
-      opacity: 0.55 - i * 0.07, blending: THREE.AdditiveBlending, depthWrite: false,
-    })
-  );
-  ring.rotation.x = 0.5 + i * 0.35;
-  ring.rotation.y = i * 0.7;
-  core.add(ring);
-  rings.push(ring);
+/* ───────────── 视界：黑洞（搬自 aemeath-forge） ─────────────
+   原来中间是那颗「等离子球」，在 bloom 下永远糊成一团白 —— 因为它就是一个
+   中等亮度的球，没有真正的黑，也没有真正集中的亮。
+   forge 那套的做法完全不同，而这个差别就是「高级」和「廉价」的分界：
+     · 圆心是一颗近乎纯黑的盘（0.004），不做任何提亮
+     · 边缘 `exp(-sq((r-1)/0.02))` 是一圈极细的「光子环」，亮度可以远高于 1
+     · 外面一个方向性的吸积带 `0.5+0.5*cos(ang-2.3)`，不是均匀的圆环
+     · 再往外才是很淡的光晕
+   黑要黑到底、亮要亮成线，中间不给灰色过渡 —— 这才有「眼睛」。
+   这是一个全屏 quad，顶点着色器直接吐 NDC，不受相机影响。 */
+const holeUniforms = {
+  uRes: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+  uCtr: { value: new THREE.Vector2(window.innerWidth * 0.5, window.innerHeight * 0.5) },
+  uR: { value: Math.min(window.innerWidth, window.innerHeight) * 0.095 },
+  uTime: { value: 0 },
+  uEnergy: { value: 0.6 },
+  uPulse: { value: 0 },
+  uWarm: { value: 0.12 },
+  uAlpha: { value: 1 },
+};
+const holeMat = new THREE.ShaderMaterial({
+  uniforms: holeUniforms,
+  vertexShader: `
+    varying vec2 vP;
+    uniform vec2 uRes;
+    void main() {
+      vec2 p = position.xy;
+      vP = vec2((p.x * 0.5 + 0.5) * uRes.x, (1.0 - (p.y * 0.5 + 0.5)) * uRes.y);
+      gl_Position = vec4(p, 0.0, 1.0);
+    }
+  `,
+  fragmentShader: `
+    precision highp float;
+    uniform vec2 uCtr;
+    uniform float uR, uTime, uEnergy, uPulse, uWarm;
+    varying vec2 vP;
+    float sq(float x){ return x * x; }
+    void main(){
+      vec2 q = vP - uCtr; q.y = -q.y;
+      // ★ 视界是球，投影永远是正圆；吸积盘是斜躺在空间里的面，投影是扁椭圆。
+      //   原来整套都用正圆，所以看着像靶心 —— 现在把「盘」压扁 0.32 再转 0.62 弧度，
+      //   它才像斜着躺进去的一圈物质，「视界」仍然保持正圆。
+      vec2 e = vec2(q.x, q.y / 0.32);
+      float cr = cos(0.62), sr = sin(0.62);
+      vec2 er = vec2(e.x * cr - e.y * sr, e.x * sr + e.y * cr);
+      float rR = length(q) / uR;          // 正圆：视界与光子环
+      float r = length(er) / uR;          // 椭圆：吸积带与外晕
+      float ang = atan(er.y, er.x);
+      vec3 tint = mix(vec3(0.80, 0.88, 1.0), vec3(1.0, 0.80, 0.62), uWarm);
+      float beam = 0.5 + 0.5 * cos(ang - 2.3);
+      float glow = exp(-max(rR - 1.0, 0.0) * 2.5) * 0.17 * (0.75 + uEnergy * 0.7);
+      float s1 = 0.5 + 0.5 * sin(ang * 9.0 + r * 13.0 - uTime * 1.2);
+      float s2 = 0.5 + 0.5 * sin(ang * 17.0 - r * 21.0 + uTime * 0.8 + 1.7);
+      float band = exp(-sq((r - 1.30) / 0.42));
+      float acc = band * (s1 * 0.6 + s2 * 0.4) * 0.13 * (0.6 + uEnergy);
+      float ring = exp(-sq((rR - 1.0) / 0.02)) * (0.45 + 0.95 * beam) * (0.85 + uEnergy * 0.6);
+      float ring2 = exp(-sq((rR - 1.05) / 0.07)) * 0.22 * (0.4 + beam);
+      float halo = exp(-sq((r - 1.75) / 0.10)) * 0.055;
+      float pr = 1.0 + uPulse * 3.6;
+      float shock = uPulse > 0.0 ? exp(-sq((rR - pr) / (0.05 + uPulse * 0.12))) * (1.0 - uPulse) * 0.55 : 0.0;
+      vec3 col = tint * (glow * (0.6 + 0.6 * beam) + acc + ring + ring2 + halo + shock);
+      float disc = 1.0 - smoothstep(0.985, 1.0, rR);
+      vec3 dcol = vec3(0.004, 0.005, 0.008) + tint * 0.035 * smoothstep(0.55, 1.0, rR) * beam;
+      gl_FragColor = vec4(col * (1.0 - disc) + dcol * disc, disc);
+    }
+  `,
+  transparent: true,
+  depthTest: false,
+  depthWrite: false,
+  blending: THREE.CustomBlending,
+  blendSrc: THREE.OneFactor,
+  blendDst: THREE.OneMinusSrcAlphaFactor,
+});
+// 2026-11-20 撤掉：这段黑洞 shader 是从 aemeath-forge 搬过来的，形态改了两版
+// （正圆 → 斜躺椭圆）还是不对味，先撤。代码留着不删 —— 哪天想再试，
+// 把最后那句 scene.add(holeMesh) 加回来就行，uniforms 每帧都在更新。
+const holeMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), holeMat);
+holeMesh.frustumCulled = false;
+holeMesh.renderOrder = 9999;
+
+/* ───────────── 中心核：一团高密度粒子 ─────────────
+   2026-11-20：中间那个实体球整个撤掉了。球体有个明确的轮廓边缘，一旦有边，
+   看着就像「贴了一个球上去」，跟周围的粒子完全不是同一种东西。
+   换成粒子云之后没有边 —— 只有「越靠中心越密、越亮」，密度本身就是焦点。
+   core 组留着但不显示（别处还在引用它的对象，直接删会报错）。 */
+core.visible = false;
+
+let coreDustMesh = null;
+let fieldDustMesh = null;
+const CORE_DUST = 2200;
+{
+  const pos = new Float32Array(CORE_DUST * 3);
+  const col = new Float32Array(CORE_DUST * 3);
+  for (let i = 0; i < CORE_DUST; i += 1) {
+    // 幂次 2.4：绝大多数粒子挤在很小的半径里，少数拖到外围，形成密度梯度
+    const r = Math.pow(Math.random(), 2.2) * 11.5;
+    const th = Math.random() * TAU;
+    const ph = Math.acos(2 * Math.random() - 1);
+    pos[i * 3] = Math.sin(ph) * Math.cos(th) * r;
+    pos[i * 3 + 1] = Math.sin(ph) * Math.sin(th) * r * 0.72;
+    pos[i * 3 + 2] = Math.cos(ph) * r;
+    // 中心偏冷白、外沿偏青
+    const t = Math.min(1, r / 11.5);
+    const b = 0.42 + Math.random() * 0.58;
+    col[i * 3] = (0.72 + t * 0.1) * b;
+    col[i * 3 + 1] = (0.95 - t * 0.12) * b;
+    col[i * 3 + 2] = 1.0 * b;
+  }
+  const coreDustGeo = new THREE.BufferGeometry();
+  coreDustGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  coreDustGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  coreDustMesh = new THREE.Points(coreDustGeo, new THREE.PointsMaterial({
+    size: 0.13, map: GLOW, vertexColors: true, transparent: true,
+    opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false,
+    sizeAttenuation: true,
+  }));
+  coreDustMesh.name = 'coreDust';
+  scene.add(coreDustMesh);
 }
 
-const flareH = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: STREAK, color: 0x67E8F9, transparent: true, opacity: 0.34,
-  blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false,
-}));
-flareH.scale.set(20, 1.5, 1);
-core.add(flareH);
-const flareV = new THREE.Sprite(new THREE.SpriteMaterial({
-  map: STREAK, color: 0x22D3EE, transparent: true, opacity: 0.22,
-  blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, fog: false,
-}));
-flareV.material.rotation = Math.PI / 2;
-flareV.scale.set(11, 0.9, 1);
-core.add(flareV);
+/* ───────────── 空间星尘 ─────────────
+   2026-11-20：换成粒子核之后画面「空」了 —— 因为星团是一层壳，壳里面和壳
+   外面都是纯黑。铺一层分布在 10~52 半径上的极暗星尘，把空的地方垫出底子来。
+   亮度压到刚好能看见一点点，不能抢主体。 */
+const FIELD_DUST = 3200;
+{
+  const pos = new Float32Array(FIELD_DUST * 3);
+  const col = new Float32Array(FIELD_DUST * 3);
+  for (let i = 0; i < FIELD_DUST; i += 1) {
+    const r = 10 + Math.pow(Math.random(), 0.6) * 42;
+    const th = Math.random() * TAU;
+    const ph = Math.acos(2 * Math.random() - 1);
+    pos[i * 3] = Math.sin(ph) * Math.cos(th) * r;
+    pos[i * 3 + 1] = Math.sin(ph) * Math.sin(th) * r * 0.8;
+    pos[i * 3 + 2] = Math.cos(ph) * r;
+    const b = 0.18 + Math.random() * 0.32;
+    const warm = Math.random() < 0.18;
+    col[i * 3] = (warm ? 0.95 : 0.52) * b;
+    col[i * 3 + 1] = (warm ? 0.78 : 0.82) * b;
+    col[i * 3 + 2] = (warm ? 0.62 : 1.0) * b;
+  }
+  const fieldGeo = new THREE.BufferGeometry();
+  fieldGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  fieldGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  fieldDustMesh = new THREE.Points(fieldGeo, new THREE.PointsMaterial({
+    size: 0.16, map: GLOW, vertexColors: true, transparent: true,
+    opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false,
+    sizeAttenuation: true,
+  }));
+  fieldDustMesh.name = 'fieldDust';
+  scene.add(fieldDustMesh);
+}
 
+const coreShell = new THREE.Mesh(
+  new THREE.SphereGeometry(2.15, 48, 32),
+  new THREE.MeshBasicMaterial({
+    color: 0x22d3ee, transparent: true, opacity: 0.10,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  })
+);
+core.add(coreShell);
+
+// 第二层壳：把白的硬边往外化开。没有这一层，实心球在 bloom 之后就是
+// 一颗边缘很利落的珍珠，跟周围的雾接不上。
+const coreShell2 = new THREE.Mesh(
+  new THREE.SphereGeometry(3.4, 40, 28),
+  new THREE.MeshBasicMaterial({
+    color: 0x3fc7e0, transparent: true, opacity: 0.04,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  })
+);
+core.add(coreShell2);
+
+// 留一层线框当「结构感」，但压到几乎看不见 —— 它的作用是给球面一点经纬暗示，
+// 不该让人看出来这是个二十面体。
 const holoShell = new THREE.LineSegments(
-  new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(3.9, 1)),
+  new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.6, 1)),
   new THREE.LineBasicMaterial({
-    color: 0x22D3EE, transparent: true, opacity: 0.13,
+    color: 0x22D3EE, transparent: true, opacity: 0.055,
     blending: THREE.AdditiveBlending, depthWrite: false,
   })
 );
 core.add(holoShell);
 
-const holoShell2 = new THREE.LineSegments(
-  new THREE.WireframeGeometry(new THREE.OctahedronGeometry(5.1, 0)),
-  new THREE.LineBasicMaterial({
-    color: 0x22D3EE, transparent: true, opacity: 0.08,
-    blending: THREE.AdditiveBlending, depthWrite: false,
-  })
-);
-core.add(holoShell2);
+/* ───────────── 体积光柱（已拆） ─────────────
+   2026-11-20 撤回：这里原先是七道从核心射出的锥形光柱，想模仿 dioramas 的
+   volumetric spotlight。但这个视角是正对着看 —— 锥体在屏幕上的投影就是几块
+   巨大的三角板横贯画面，比原来更难看。
+   结论：体积光必须是「从背后打过来、从侧面看」才有戏，从中心朝镜头射只会变成
+   扇形色块。真要做得先有侧视角和遮挡体。 */
+
+/* ───────────── 环形舱（已拆） ─────────────
+   2026-11-20 撤回：这里原本加了一圈暗金属环 + 36 个舱段 + 3 根辐条，
+   想给画面一个「实体支点」。结果辐条成了三根横穿画面的擎天柱，环本身
+   也在跟星团抢视线，还把中心的球框死在一个甜甜圈里。
+   教训记这里：没有构图理由的实体，加了只是多一样噪声。 */
 
 /* ───────────── 吸积盘星系粒子 ───────────── */
 const DISK_COUNT = 5000;
@@ -604,7 +875,10 @@ const diskGeo = new THREE.BufferGeometry();
     pos[i * 3 + 1] = (Math.random() - 0.5) * (0.22 + radius * 0.055);
     pos[i * 3 + 2] = Math.sin(angle) * radius + jitter;
     const warm = Math.random() < 0.08;
-    const brightness = 0.35 + Math.random() * 0.65;
+    // ★ 径向亮度：内圈（贴着恒星）最热、外圈冷下去。原来 brightness 纯随机，
+    //   盘就没有「内热外冷」的物理感，看着像一张撒了亮点的纸。
+    const radial = 1 - Math.min(1, (radius - 2.6) / 10.5);
+    const brightness = 0.16 + Math.pow(radial, 1.7) * 0.9 + Math.random() * 0.18;
     col[i * 3] = (warm ? 1.0 : 0.3) * brightness;
     col[i * 3 + 1] = (warm ? 0.74 : 1.0) * brightness;
     col[i * 3 + 2] = (warm ? 0.4 : 0.9) * brightness;
@@ -613,8 +887,8 @@ const diskGeo = new THREE.BufferGeometry();
   diskGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 }
 const diskMat = new THREE.PointsMaterial({
-  size: 0.085, map: GLOW, alphaTest: 0.01,
-  vertexColors: true, transparent: true, opacity: 0.72,
+  size: 0.105, map: GLOW, alphaTest: 0.01,
+  vertexColors: true, transparent: true, opacity: 0.55,
   blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
 });
 const disk = new THREE.Points(diskGeo, diskMat);
@@ -715,7 +989,7 @@ function updateStreams(dt) {
 }
 
 /* ───────────── 径向光轨 ───────────── */
-const ringLineCount = 1600;
+const ringLineCount = 600;
 const ringPositions = new Float32Array(ringLineCount * 2 * 3);
 const ringColors = new Float32Array(ringLineCount * 2 * 3);
 for (let i = 0; i < ringLineCount; i += 1) {
@@ -749,6 +1023,63 @@ const ringMat = new THREE.LineBasicMaterial({
 });
 const ringLines = new THREE.LineSegments(ringGeo, ringMat);
 scene.add(ringLines);
+
+/* ───────────── 外笼：经纬网格球 ─────────────
+   原来整个星团是「悬在空里的一团光」—— 没有边界、没有尺度参照，所以看不出
+   它有多大、是个什么东西，只剩一坨发光的东西漂着。
+   加一层半径 14 的经纬线球，把它整个装进一个「舱」里。这是最便宜的结构感来源：
+   几千个点换来的却是「这东西有壳、有内壁、有坐标」的暗示。 */
+function makeGridSphere(R, latCount, lonCount, seg) {
+  const pts = [];
+  // 纬线
+  for (let i = 1; i < latCount; i += 1) {
+    const phi = (Math.PI * i) / latCount;
+    const y = Math.cos(phi) * R;
+    const r = Math.sin(phi) * R;
+    for (let j = 0; j < seg; j += 1) {
+      const a1 = (TAU * j) / seg;
+      const a2 = (TAU * (j + 1)) / seg;
+      pts.push(Math.cos(a1) * r, y, Math.sin(a1) * r);
+      pts.push(Math.cos(a2) * r, y, Math.sin(a2) * r);
+    }
+  }
+  // 经线
+  const half = Math.max(2, Math.floor(seg / 2));
+  for (let i = 0; i < lonCount; i += 1) {
+    const theta = (Math.PI * i) / lonCount;
+    for (let j = 0; j < half; j += 1) {
+      const p1 = (Math.PI * j) / half;
+      const p2 = (Math.PI * (j + 1)) / half;
+      pts.push(
+        Math.sin(p1) * Math.cos(theta) * R, Math.cos(p1) * R, Math.sin(p1) * Math.sin(theta) * R,
+        Math.sin(p2) * Math.cos(theta) * R, Math.cos(p2) * R, Math.sin(p2) * Math.sin(theta) * R
+      );
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  return geo;
+}
+const cage = new THREE.LineSegments(
+  makeGridSphere(14.2, 12, 16, 72),
+  new THREE.LineBasicMaterial({
+    color: 0x22d3ee, transparent: true, opacity: 0.022,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  })
+);
+cage.rotation.z = 0.1;
+scene.add(cage);
+
+// 内层再套一个更细的赤道环，给「笼子」一个参照平面
+const equator = new THREE.LineSegments(
+  makeGridSphere(14.2, 2, 1, 160),
+  new THREE.LineBasicMaterial({
+    color: 0x67e8f9, transparent: true, opacity: 0.1,
+    blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+  })
+);
+equator.rotation.x = Math.PI / 2;
+scene.add(equator);
 
 /* ───────────── 曲速光流 ───────────── */
 const WARP_COUNT = 8000;
@@ -1064,6 +1395,9 @@ scene.add(galaxy);
 let nodePositions = new Map();
 let memorySprites = [];
 let edgeLines = [];
+// Line2 的材质要单独记着：它的 resolution 必须跟着窗口尺寸走，
+// 不然一拉窗口，线宽就被拉伸成糊条。resize() 里会遍历这个数组。
+let lineMaterials = [];
 let edgeCurves = [];
 let labelSprites = [];
 let nodeSprites = [];
@@ -1090,7 +1424,11 @@ function disposeGroup(group) {
   for (const child of [...group.children]) group.remove(child);
   geometries.forEach((g) => g.dispose());
   materials.forEach((m) => m.dispose());
-  textures.forEach((t) => t.dispose());
+  // ★ 2026-11-20 修 bug：这里原本还会 textures.forEach((t) => t.dispose())。
+  //   GLOW 和 STREAK 是全场景共享的贴图 —— 第一次用 fallback 数据建完，
+  //   第二次拿到真数据重建时把它们连着销毁，之后所有引用它们的 sprite
+  //   全部变空白。症状极像「渲染挂了」：fps 60、对象数正常、画面纯黑。
+  //   共享纹理留给页面生命周期，这里一律不碰。
 }
 
 function mulberry(seed) {
@@ -1109,6 +1447,7 @@ function buildGalaxy(data) {
   nodePositions = new Map();
   memorySprites = [];
   edgeLines = [];
+  lineMaterials = [];
   edgeCurves = [];
   labelSprites = [];
   nodeSprites = [];
@@ -1123,18 +1462,70 @@ function buildGalaxy(data) {
   const nodes = data.nodes || [];
   const memories = data.memories || [];
   const edges = data.edges || [];
-  const RADIUS = 9.2;
+  // ★ 2026-11-20：9.2 的时候 59 个簇全挤在一层球壳上，糊成一锅粥。
+  //   nebula 那套好看的地方就在于「簇与簇之间有大量空白」，所以拉到 15 ——
+  //   留白是构图的一半。
+  const RADIUS = 12;
+
+  // 度数最高的节点当「枢纽」，用它做分层依据；顺便挑出十几个值得一直露脸的
+  // 标签 —— 59 个标签全显示的话，屏幕上就是一地碎字，谁也读不清。
+  const maxDeg = nodes.reduce((m, n) => Math.max(m, n.degree || 0), 1);
+  const labelRank = new Set(
+    [...nodes]
+      .sort((a, b) => (b.degree || 0) - (a.degree || 0))
+      .slice(0, 14)
+      .map((n) => n.id)
+  );
 
   // ★ 分区不再排成一个平面圆环（那是原来「中间一坨、四周一圈」的根源），
   //   改成斐波那契球面分布：从任何角度看都是立体的星团，前后有真有假纵深。
   const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+
+  // ★ 2026-11-20：节点原来只有一张 GLOW 平面贴图当本体，转到侧面就是一张纸 ——
+  //   这是画面「虚、飘、假」最直观的来源。补一层真几何：59 个球共用一个
+  //   InstancedMesh，一次 draw call 画完，位置走 instanceMatrix。
+  const nodeGeo = new THREE.SphereGeometry(1, 18, 14);
+  const nodeBallMat = new THREE.MeshLambertMaterial({
+    color: 0xffffff,
+    // 自发光给足：光靠点光照不到外圈，球会变成灰石子。自发光负责「像在发光」，
+    // 点光只负责给迎光面一点冷暖过渡。
+    emissive: 0x5fc8e6,
+    emissiveIntensity: 1.0,
+  });
+  // ★ 2026-11-20：nebula 那张好看的第二个原因 —— 每个星团一个颜色，
+  //   青、粉、橙、绿、紫各有各的簇，而不是整屏一个青色。
+  //   这里按节点序号循环取色，让相邻的分区在色相上拉开。
+  const NODE_HUES = [0x7de3ff, 0xa78bfa, 0xf472b6, 0xfbbf24, 0x4ade80, 0x93c5fd];
+  const nodeBalls = new THREE.InstancedMesh(nodeGeo, nodeBallMat, Math.max(1, nodes.length));
+  nodeBalls.frustumCulled = false;
+  galaxy.add(nodeBalls);
+  const tmpMat4 = new THREE.Matrix4();
+  const tmpScale = new THREE.Vector3();
+  const tmpQuat = new THREE.Quaternion();
+
+  // ★ 2026-11-20：按度數排名分层。原来 59 个分区按斐波那契均匀铺在同一个
+  //   球壳上，密度处处一样 —— 这就是「出不来疏密」的根。
+  //   现在按度数排：前 15% 沉进核心圈（半径 4~6），中间 40% 排中环（8~12），
+  //   其余甩到外圈（14~19）并且压暗。密度梯度一出来，画面才有主次。
+  const rankMap = new Map();
+  [...nodes]
+    .sort((a, b) => (b.degree || 0) - (a.degree || 0))
+    .forEach((n, idx) => rankMap.set(n.id, idx));
+  const rankSpan = Math.max(1, nodes.length - 1);
+  // 记录每个分区的颜色，连线要用它做两端渐变 —— 一条线从 A 的颜色过渡到 B 的颜色，
+  // 比整屏一个青色高级得多，也让「谁连到谁」一眼看得出来
+  const nodeColorById = new Map();
+
   nodes.forEach((node, i) => {
     const n = Math.max(1, nodes.length);
     const y = 1 - (i / Math.max(1, n - 1)) * 2;      // -1 .. 1
     const ring = Math.sqrt(Math.max(0, 1 - y * y));
     const theta = GOLDEN * i;
-    // 半径做一点抖动，免得球壳太规整
-    const R = RADIUS * (0.82 + ((i * 37) % 11) / 11 * 0.34);
+    // 分层半径：排名越靠后越靠外
+    const rank = (rankMap.has(node.id) ? rankMap.get(node.id) : i) / rankSpan;
+    const norm = (node.degree || 0) / maxDeg;
+    const R = RADIUS * (1.28 - norm * 0.46) * (0.94 + ((i * 37) % 11) / 11 * 0.12);
+    const fade = 1 - rank * 0.58;              // 越外越暗，制造纵深
     const pos = new THREE.Vector3(
       Math.cos(theta) * ring * R,
       y * R,
@@ -1142,8 +1533,19 @@ function buildGalaxy(data) {
     );
     nodePositions.set(node.id, pos);
 
+    // 实体球：度数越大球越大，跟光晕的缩放走同一套比例
+    const ballR = 0.20 + Math.min(10, node.degree || 0) * 0.019;
+    tmpScale.set(ballR, ballR, ballR);
+    tmpMat4.compose(pos, tmpQuat, tmpScale);
+    nodeBalls.setMatrixAt(i, tmpMat4);
+    const nodeHue = NODE_HUES[i % NODE_HUES.length];
+    nodeBalls.setColorAt(i, new THREE.Color(nodeHue));
+    nodeColorById.set(node.id, new THREE.Color(nodeHue));
+
+    // 贴图 sprite 退居二线当光晕：0.40 是「球体轮廓还在、外围有一圈溢光」的量。
+    // 原来 0.95 的时候它自己就是主体，所以整个星团看着像一堆虚光斑。
     const nodeSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: GLOW, color: 0xbef0ff, transparent: true, opacity: 0.95,
+      map: GLOW, color: nodeHue, transparent: true, opacity: 0.40 * fade,
       blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
     }));
     const scale = 0.78 + Math.min(10, node.degree || 0) * 0.075;
@@ -1154,7 +1556,7 @@ function buildGalaxy(data) {
     nodeSprites.push(nodeSprite);
 
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: GLOW, color: 0x22D3EE, transparent: true, opacity: 0.15,
+      map: GLOW, color: nodeHue, transparent: true, opacity: 0.15 * fade,
       blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
     }));
     halo.scale.set(scale * 3.4, scale * 3.4, 1);
@@ -1163,21 +1565,28 @@ function buildGalaxy(data) {
     nodeSprite.userData.halo = halo;
 
     const { tex, aspect } = labelTexture(String(node.name || '').slice(0, 9));
+    // 只有枢纽那十几个标签常亮，其余压到几乎看不见 —— hover 时会再抬起来。
+    const hotLabel = labelRank.has(node.id);
+    const labelOpacity = hotLabel ? 0.8 : 0.14;
     const label = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: tex, transparent: true, opacity: 0.62, depthWrite: false, depthTest: false, fog: false,
+      map: tex, transparent: true, opacity: labelOpacity, depthWrite: false, depthTest: false, fog: false,
     }));
     label.scale.set(aspect * 0.52, 0.52, 1);
-    label.position.copy(pos.clone().multiplyScalar(1.16));
-    label.userData = { kind: 'label', nodeId: node.id };
+    // 沿法线外推一个固定距离。原来乘 1.16 倍率，外圈节点的标签会被甩得特别远，
+    // 直接飘到左右面板底下去。
+    label.position.copy(pos).addScaledVector(pos.clone().normalize(), 0.62);
+    label.userData = { kind: 'label', nodeId: node.id, baseOpacity: labelOpacity };
     galaxy.add(label);
     labelSprites.push(label);
   });
+  nodeBalls.instanceMatrix.needsUpdate = true;
+  if (nodeBalls.instanceColor) nodeBalls.instanceColor.needsUpdate = true;
 
   const kindMaterials = new Map();
   function memoryMaterial(kind) {
     if (kindMaterials.has(kind)) return kindMaterials.get(kind);
     const material = new THREE.SpriteMaterial({
-      map: GLOW, color: KIND_COLOR[kind] || KIND_COLOR.unknown, transparent: true, opacity: 0.9,
+      map: GLOW, color: KIND_COLOR[kind] || KIND_COLOR.unknown, transparent: true, opacity: 0.62,
       blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
     });
     kindMaterials.set(kind, material);
@@ -1189,8 +1598,10 @@ function buildGalaxy(data) {
     const random = mulberry(memory.id * 2654435761 + 17);
     const theta = random() * TAU;
     const phi = Math.acos(2 * random() - 1);
-    // 簇半径收紧：59 个分区同时展开的话，2.1 会让相邻簇糊在一起
-    const radius = 0.28 + Math.pow(random(), 0.75) * 1.35;
+    // ★ 2026-11-20：原来 0.28~1.63 撒得太开，每个分区变成一圈稀薄的光环，
+    //   看着像撒了一把芝麻。nebula 那边一个簇是几百个点挤在一起的浓云 ——
+    //   收紧到 0.06~0.48，簇才有「团」的形状。
+    const radius = 0.06 + Math.pow(random(), 0.9) * 0.42;
     const pos = new THREE.Vector3(
       base.x + Math.sin(phi) * Math.cos(theta) * radius,
       base.y + Math.sin(phi) * Math.sin(theta) * radius,
@@ -1211,19 +1622,99 @@ function buildGalaxy(data) {
     memorySprites.push(sprite);
   });
 
+  // ★ 2026-11-20：262 个记忆点在 1440p 上太稀疏 —— 平均每个点占五十多像素见方，
+  //   这是「点阵」，离「星云」差着一整个数量级。给每个记忆点再造 8 颗微粒当视觉
+  //   分身（不改真实数据，只是视觉密度），用一张 Points 一次画完，几乎不花性能。
+  //   这是加密度最便宜的一招：数据没动，观感从「稀疏点」变成「有云的星团」。
+  const HALO_PER_MEMORY = 14;
+  if (memorySprites.length > 0) {
+    const haloCount = memorySprites.length * HALO_PER_MEMORY;
+    const haloPos = new Float32Array(haloCount * 3);
+    const haloCol = new Float32Array(haloCount * 3);
+    let hi = 0;
+    for (const sprite of memorySprites) {
+      const rgb = KIND_RGB[sprite.userData.memory && sprite.userData.memory.kind] || KIND_RGB.unknown;
+      const px = sprite.position.x;
+      const py = sprite.position.y;
+      const pz = sprite.position.z;
+      for (let k = 0; k < HALO_PER_MEMORY; k += 1) {
+        const r = 0.3 + Math.random() * 1.05;
+        const th = Math.random() * TAU;
+        const ph = Math.acos(2 * Math.random() - 1);
+        haloPos[hi * 3] = px + Math.sin(ph) * Math.cos(th) * r;
+        haloPos[hi * 3 + 1] = py + Math.sin(ph) * Math.sin(th) * r;
+        haloPos[hi * 3 + 2] = pz + Math.cos(ph) * r;
+        const b = 0.30 + Math.random() * 0.55;
+        haloCol[hi * 3] = (rgb[0] / 255) * b;
+        haloCol[hi * 3 + 1] = (rgb[1] / 255) * b;
+        haloCol[hi * 3 + 2] = (rgb[2] / 255) * b;
+        hi += 1;
+      }
+    }
+    const haloGeo = new THREE.BufferGeometry();
+    haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPos, 3));
+    haloGeo.setAttribute('color', new THREE.BufferAttribute(haloCol, 3));
+    const haloPts = new THREE.Points(haloGeo, new THREE.PointsMaterial({
+      size: 0.15, map: GLOW, vertexColors: true, transparent: true,
+      opacity: 0.72, blending: THREE.AdditiveBlending, depthWrite: false,
+      sizeAttenuation: true,
+    }));
+    galaxy.add(haloPts);
+  }
+
   edges.forEach((edge) => {
     const a = nodePositions.get(edge.src);
     const b = nodePositions.get(edge.dst);
     if (!a || !b) return;
-    const mid = a.clone().add(b).multiplyScalar(0.5).multiplyScalar(0.52);
+    // ★ 2026-11-20：原来控制点直接乘 0.52 往原点收，等于每条边都先跑回中心
+    //   再散出去 —— 视觉上就是从核里炸出来的蜘蛛网，59 个分区乘出来密密麻麻。
+    //   现在改成在 ab 中点上做垂直方向的弧，弧高跟两点距离走，再往球外鼓一点，
+    //   边就成了「贴着壳走的连线」，不再穿透球心。
+    const mid = a.clone().add(b).multiplyScalar(0.5);
+    const dir = b.clone().sub(a);
+    const len = dir.length() || 1;
+    const up = new THREE.Vector3(0, 1, 0);
+    let perp = new THREE.Vector3().crossVectors(dir, up);
+    if (perp.lengthSq() < 1e-4) {
+      perp = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(1, 0, 0));
+    }
+    perp.normalize();
+    const outward = mid.clone().normalize();
+    const bow = Math.min(2.4, len * 0.24);
+    mid.addScaledVector(perp, bow * 0.45).addScaledVector(outward, bow * 0.6);
     const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
     const points = curve.getPoints(48);
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({
-      color: 0x22D3EE, transparent: true, opacity: 0.17,
+    // Line2 取代 LineBasicMaterial：linewidth 是像素单位，1.6 在 DPR 2 下刚好
+    // 有实体感又不抢节点。原来的 1px 线在大屏上基本看不见，只能靠 opacity 硬撑。
+    const positions = [];
+    for (const pt of points) positions.push(pt.x, pt.y, pt.z);
+    const geometry = new LineGeometry();
+    geometry.setPositions(positions);
+    // ★ 2026-11-20：连线原来全长一个样 —— 同一颜色、同一粗细、同一亮度，
+    //   所以看着像 CAD 的辅助线，很廉价。现在按两端分区的颜色做线性渐变，
+    //   线宽收到 1.0，透明度压到 0.22 —— 细、带色、有方向。
+    const ca = nodeColorById.get(edge.src) || new THREE.Color(0x22d3ee);
+    const cb = nodeColorById.get(edge.dst) || new THREE.Color(0x22d3ee);
+    const cols = [];
+    const segN = Math.max(1, points.length - 1);
+    for (let k = 0; k < points.length; k += 1) {
+      const t = k / segN;
+      cols.push(
+        ca.r + (cb.r - ca.r) * t,
+        ca.g + (cb.g - ca.g) * t,
+        ca.b + (cb.b - ca.b) * t
+      );
+    }
+    geometry.setColors(cols);
+    const material = new LineMaterial({
+      color: 0xffffff, linewidth: 1.0, transparent: true, opacity: 0.22,
+      vertexColors: true,
       blending: THREE.AdditiveBlending, depthWrite: false,
     });
-    const line = new THREE.Line(geometry, material);
+    material.resolution.set(window.innerWidth, window.innerHeight);
+    lineMaterials.push(material);
+    const line = new Line2(geometry, material);
+    line.computeLineDistances();
     galaxy.add(line);
     edgeLines.push(line);
     edgeCurves.push(curve);
@@ -1279,7 +1770,10 @@ function updateCamera(dt) {
   // 构图：试过把注视点推出画外（haloflux 那套圆心留在框外），在星炬这里不成立 ——
   // 中间的视觉区被左右面板夹着，推出去只会让 3D 文字标签飘进左栏压住 KPI。
   // 保留微量下移，让主体不在数学正中心，但不出格。
-  const wantShift = inTunnel ? 0 : 0;
+  // 2026-11-20 恢复构图偏移：之前为了躲「3D 标签压左栏」被写死成 0，结果主体
+  // 永远钉在几何正中，画面像一张居中贴纸，左右两栏全是空的。0.9 是既能把主体
+  // 推离中心、又不让标签出界的量。
+  const wantShift = inTunnel ? 0 : 0.9;
   lookShift += (wantShift - lookShift) * Math.min(1, dt * 3);
   const shiftX = Math.cos(cam.yaw) * lookShift;
   const shiftZ = -Math.sin(cam.yaw) * lookShift;
@@ -1557,7 +2051,7 @@ function setMode(next) {
   document.querySelectorAll('.tabs button').forEach((button) => {
     button.classList.toggle('on', Number(button.dataset.mode) === next);
   });
-  cam.targetDist = [25, 16.5, 28][next];
+  cam.targetDist = [34, 19, 36][next];
   clientEvent(['星团模式 · 轨道簇', '隧道模式 · 曲速核心', '关系网模式 · 链路饱和'][next], 'ok');
 }
 document.querySelectorAll('.tabs button').forEach((button) => {
@@ -1593,6 +2087,9 @@ function drawSwarm() {
   const w = p.w || 1;
   const h = p.h || 1;
   c.clearRect(0, 0, w, h);
+  // 相加混合：粒子叠在一起才会「越密越亮」，像真的光。
+  // 之前用默认的 source-over，后画的直接盖掉前面的，摊出来就是一片薄塑料。
+  c.globalCompositeOperation = 'lighter';
 
   const cx0 = w / 2, cy0 = h / 2;
   const R = Math.min(w, h) * 0.46;
@@ -1644,6 +2141,7 @@ function drawSwarm() {
     c.arc(x, y, 0.65 + (1 - rr) * 1.5, 0, TAU);
     c.fill();
   }
+  c.globalCompositeOperation = 'source-over';
 }
 function drawRouter() {
   const p = panels[1];
@@ -1668,13 +2166,18 @@ function drawRouter() {
     c.fillStyle = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.10)`;
     c.fillRect(50, y - 2.5, trackW, 5);
 
-    // 条体：左暗右亮，尾部收成一点光
+    // 条体：左暗右亮，尾部收成一点光。
+    // shadowBlur 让条自身发光 —— 没有这层，渐变条在暗底上只是一块半透明胶带。
     const lg = c.createLinearGradient(50, 0, 50 + barW, 0);
     lg.addColorStop(0, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.30)`);
     lg.addColorStop(0.75, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.80)`);
     lg.addColorStop(1, `rgba(${rgb[0]},${rgb[1]},${rgb[2]},1)`);
+    c.save();
+    c.shadowBlur = 8;
+    c.shadowColor = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.8)`;
     c.fillStyle = lg;
     c.fillRect(50, y - 2.5, barW, 5);
+    c.restore();
 
     // 末端高光
     c.fillStyle = `rgba(255,255,255,0.85)`;
@@ -1740,11 +2243,17 @@ function drawWave() {
   c.fillStyle = grad;
   c.fill();
 
+  // 亮线：shadowBlur 让线自己往外散光，暗底上才有「荧光管」的质感。
+  // 只给主曲线加，MEM 那条保持克制，不然两条都在发光就糊成一团。
+  c.save();
+  c.shadowBlur = 9;
+  c.shadowColor = 'rgba(34,211,238,0.9)';
   c.beginPath();
   cpu.forEach(([x, y], i) => (i === 0 ? c.moveTo(x, y) : c.lineTo(x, y)));
-  c.strokeStyle = 'rgba(34,211,238,0.9)';
-  c.lineWidth = 1.4;
+  c.strokeStyle = 'rgba(34,211,238,0.95)';
+  c.lineWidth = 1.5;
   c.stroke();
+  c.restore();
 
   // MEM：细线
   const mem = path('mem');
@@ -1784,6 +2293,10 @@ function drawHeat() {
   const c = p.ctx;
   const w = p.w || 1;
   const h = p.h || 1;
+  // 面板被隐藏或折叠时 w/h 会变成 0，下面的 cell 就成了负数，
+  // createRadialGradient 会抛 IndexSizeError —— 那个异常会把整个 pull() 带崩，
+  // 表现成「数据断线」，其实数据好好的。所以尺寸不对就干脆别画。
+  if (w < 8 || h < 8) return;
   c.clearRect(0, 0, w, h);
   const matrix = data && data.matrix && data.matrix.length ? data.matrix : [];
   const n = matrix.length || 18;
@@ -1805,11 +2318,20 @@ function drawHeat() {
       alpha = Math.min(1, alpha + scan * 0.30);
 
       // 有值 → 冷白 / 青蓝；空格 → 极淡底
-      if (value > 0.55) c.fillStyle = `rgba(206,240,255,${alpha})`;
+      // 高值格子单独开 shadowBlur：硬边方块看着像 Excel，有点外溢才像发光像素。
+      // 只给高值开是性能考虑 —— 324 个格子全开阴影会掉帧。
+      const hot = value > 0.55;
+      if (hot) {
+        c.save();
+        c.shadowBlur = 7;
+        c.shadowColor = `rgba(206,240,255,${Math.min(0.9, alpha + 0.2)})`;
+      }
+      if (hot) c.fillStyle = `rgba(206,240,255,${alpha})`;
       else if (value > 0) c.fillStyle = `rgba(34,211,238,${alpha})`;
       else c.fillStyle = `rgba(30,42,68,${alpha + scan * 0.10})`;
 
       c.fillRect(ox + x * cell, oy + y * cell, Math.max(1, cell - 1.2), Math.max(1, cell - 1.2));
+      if (hot) c.restore();
 
       // 高值格子加一点外晕，别让矩阵看着像表格
       if (value > 0.7) {
@@ -1978,8 +2500,14 @@ async function pull() {
     }
     updateHud();
     updateLog();
+    updateLink();   // ← 原来这里漏了。成功路径从不刷新状态灯，只有失败路径调它，
+                    //   于是即便每 3 秒都拉成功，指示灯也一辈子红着显示「离线」。
     drawAllPanels();
   } catch (error) {
+    // 临时把真实异常留住：之前这个 catch 把错误吞得干干净净，
+    // 表面上一切正常（HUD 有数），只有状态灯在喊「离线」，根本不知道为什么。
+    window.__PULL_ERR__ = window.__PULL_ERR__ || [];
+    window.__PULL_ERR__.push(String((error && error.stack) || error).slice(0, 300));
     if (data) {
       data = null;
       updateLink();
@@ -2016,12 +2544,15 @@ function updateGalaxy(dt) {
   // 隧道模式原本 0.7，密到把左边 KPI 整块盖掉。压到 0.42 才留得住 HUD。
   const targetTunnel = [0.1, 0.42, 0.04][mode];
   tunnelOpacity += (targetTunnel - tunnelOpacity) * Math.min(1, dt * 3);
-  const targetEdge = [0.17, 0.06, 0.52][mode];
+  const targetEdge = [0.14, 0.07, 0.34][mode];
   edgeOpacity += (targetEdge - edgeOpacity) * Math.min(1, dt * 3);
 
-  ringMat.opacity = tunnelOpacity;
-  // 星团/关系网里曲速线只做底噪，压淡；隧道理所当然要炸
-  warpMat.opacity = mode === 1 ? 0.05 : 0.05 + tunnelOpacity * 0.9;
+  // ★ 2026-11-20：星团/关系网模式下这两层是纯背景噪声 —— 8000 条曲速线加
+  //   1600 条径向光轨全用 additive 叠着，加起来一万条线段就是一层洗不掉的
+  //   灰雾，把节点和连线全泡在里面，怎么调前景都不显干净。
+  //   分两档：隧道模式照旧炸，其余模式压到只剩一点「有东西在动」的暗示。
+  ringMat.opacity = mode === 1 ? tunnelOpacity : tunnelOpacity * 0.32;
+  warpMat.opacity = mode === 1 ? 0.05 : 0.03 + tunnelOpacity * 0.12;
 
   // 门环只在隧道模式显形，并且随「推进」前后错相呼吸
   gateGroup.visible = mode === 1;
@@ -2098,25 +2629,26 @@ function animate() {
   coreFlash = Math.max(0, coreFlash - dt * 4.6);
   // 节拍只负责轻轻鼓一下，幅度压到原来四成；推进感交给延迟包络去接
   const flashK = 1 + coreFlash * 0.62 + beatEnv * 0.10;
-  coreHalo.scale.setScalar((3.8 + Math.sin(time * 1.3) * 0.34 + beatEnv * 0.30) * flashK);
-  coreHot.scale.setScalar((1.45 + Math.sin(time * 2.1) * 0.14 + beatEnv * 0.11) * flashK);
-  // 核心别给死白：压一点红、留回青，才是这颗星炬该有的冷
-  coreBall.material.color.setRGB(0.80 + coreFlash * 0.20, 0.94, 1.0);
-  coreHalo.material.opacity = Math.min(1, 0.75 + Math.sin(time * 1.3) * 0.1 + coreFlash * 0.45 + beatEnv * 0.11);
+  coreHalo.scale.setScalar((1.3 + Math.sin(time * 1.3) * 0.12 + beatEnv * 0.15) * flashK);
+  coreHot.scale.setScalar((0.5 + Math.sin(time * 2.1) * 0.06 + beatEnv * 0.08) * flashK);
+  // 黑洞：时间推进、能量随节拍鼓、放电时打一圈冲击波出去
+  holeUniforms.uTime.value = time;
+  holeUniforms.uEnergy.value = 0.55 + beatEnv * 0.35 + coreFlash * 0.4;
+  holeUniforms.uPulse.value = Math.max(0, coreFlash * 0.85);
+  holeUniforms.uCtr.value.set(window.innerWidth * 0.5, window.innerHeight * 0.5);
+  holeUniforms.uR.value = Math.min(window.innerWidth, window.innerHeight) * 0.095;
+  // 程序化球面：时间推进流动，放电把整颗球打亮一瞬
+  coreMat.uniforms.uTime.value = time;
+  coreMat.uniforms.uFlash.value = coreFlash * 0.9 + beatEnv * 0.18;
+  // 外壳那层青是「大气」，呼吸幅度要小 —— 跟着节拍大幅鼓胀就成气球了
+  coreShell.material.opacity = 0.13 + Math.sin(time * 1.1) * 0.025 + coreFlash * 0.20 + beatEnv * 0.04;
+  coreHalo.material.opacity = Math.min(1, 0.58 + Math.sin(time * 1.3) * 0.08 + coreFlash * 0.40 + beatEnv * 0.10);
   core.rotation.z = time * 0.06;
-  rings.forEach((ring, index) => {
-    ring.rotation.z = time * (0.18 + index * 0.07);
-    ring.rotation.y += dt * (0.12 + index * 0.04);
-  });
   holoShell.rotation.x = time * 0.11;
   holoShell.rotation.y = time * 0.17;
-  holoShell2.rotation.x = -time * 0.07;
-  holoShell2.rotation.z = time * 0.09;
-  flareH.material.opacity = 0.42 + Math.sin(time * 1.7) * 0.1 + beatGlow * 0.12;
-  flareH.scale.x = 19 + Math.sin(time * 1.1) * 2.2 + beatGlow * 1.6;
-  flareV.material.opacity = 0.18 + Math.sin(time * 2.3 + 1) * 0.05 + beatGlow * 0.05;
   disk.rotation.y = time * (mode === 1 ? 0.16 : 0.045);
-  disk.rotation.x = 0.06 + Math.sin(time * 0.18) * 0.025;
+  // 倾斜到 0.22：几乎水平的时候，盘在视角里就是一条压扁的线，读不出「盘」这个形状
+  disk.rotation.x = 0.22 + Math.sin(time * 0.18) * 0.03;
   belt.rotation.y = -time * 0.012;
   // 环上流光：一拍过去集体加一次速，明暗随位置变化，像在轨道上轮流点火
   for (const spark of beltRunners) {
@@ -2132,10 +2664,22 @@ function animate() {
   }
   ringLines.rotation.z = time * 0.035 + beatKick * 0.012;
   ringLines.rotation.x = Math.sin(time * 0.12) * 0.06;
+  // 外笼慢转：速度必须够慢，快了会变成「万花筒」，慢才像舱壁在转
+  cage.rotation.y = time * 0.018;
+  cage.rotation.x = Math.sin(time * 0.09) * 0.05;
+  equator.rotation.x = Math.PI / 2 + Math.sin(time * 0.07) * 0.045;
   stars.rotation.y = time * 0.004;
+  // 两层星尘反向慢转：核心转得快一点、外层几乎不动。有相对运动，画面才「活」
+  if (coreDustMesh) {
+    coreDustMesh.rotation.y = time * 0.05;
+    coreDustMesh.rotation.x = Math.sin(time * 0.13) * 0.06;
+  }
+  if (fieldDustMesh) {
+    fieldDustMesh.rotation.y = -time * 0.011;
+  }
 
   updateFx(dt);
-  renderer.render(scene, camera);
+  composer.render();
 
   if (performance.now() - fpsAt > 600) {
     fps = Math.round((frames * 1000) / (performance.now() - fpsAt));
@@ -2154,6 +2698,14 @@ function animate() {
 function resize() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
+  // composer 自己持有一组 renderTarget，尺寸必须跟着一起改，
+  // 否则窗口一拉大，画面就被拉伸成糊的
+  if (typeof composer !== 'undefined') composer.setSize(window.innerWidth, window.innerHeight);
+  if (typeof holeUniforms !== 'undefined') {
+    holeUniforms.uRes.value.set(window.innerWidth, window.innerHeight);
+  }
+  // Line2 的每一根线都要知道画布尺寸，否则线宽会按旧尺寸算，拉窗口后变糊
+  for (const m of lineMaterials) m.resolution.set(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   resizeFx();
@@ -2178,16 +2730,24 @@ window.addEventListener('keydown', (event) => {
 });
 
 /* ───────────── 启动 ───────────── */
-resize();
-updateCamera(0);
-buildGalaxyFallback();
-pull();
-setInterval(pull, 3000);
-setInterval(() => {
-  const now = new Date();
-  $('s-clock').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
-}, 1000);
-requestAnimationFrame(animate);
+try {
+  resize();
+  updateCamera(0);
+  buildGalaxyFallback();
+  pull();
+  setInterval(pull, 3000);
+  setInterval(() => {
+    const now = new Date();
+    $('s-clock').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+  }, 1000);
+  // 初始化时显式进一次星团模式：原来 setMode 只在点按钮时调用，
+  // 相机 targetDist 就永远停在默认的 25，星团撑破画面。
+  setMode(0);
+  requestAnimationFrame(animate);
+} catch (bootErr) {
+  window.__FATAL__ = 'BOOT ' + String((bootErr && bootErr.stack) || bootErr);
+  document.title = window.__FATAL__.slice(0, 160);
+}
 
 function buildGalaxyFallback() {
   buildGalaxy({ nodes: [], memories: [], edges: [] });
@@ -2200,6 +2760,43 @@ window.__AGENT_OPS__ = {
   get arcsLive() { return arcs.filter((a) => a.active).length; },
   get mode() { return mode; },
   get data() { return data; },
+  // 调试出口：排查「对象都在但画面全黑」这类问题时直接读相机与场景状态
+  get debug() {
+    return {
+      camPos: camera.position.toArray(),
+      camDist: cam.dist,
+      camTargetDist: cam.targetDist,
+      camAspect: camera.aspect,
+      sceneChildren: scene.children.length,
+      galaxyChildren: galaxy.children.length,
+      galaxyVisible: galaxy.visible,
+      galaxyScale: galaxy.scale.toArray(),
+      galaxyOpacity,
+      starsVisible: stars.visible,
+      diskVisible: disk.visible,
+      rendererSize: [renderer.domElement.width, renderer.domElement.height],
+      sampleNode: nodeSprites[0]
+        ? {
+            pos: nodeSprites[0].position.toArray(),
+            scale: nodeSprites[0].scale.toArray(),
+            op: nodeSprites[0].material.opacity,
+          }
+        : null,
+      sampleMem: memorySprites[0]
+        ? {
+            pos: memorySprites[0].position.toArray(),
+            scale: memorySprites[0].scale.toArray(),
+            op: memorySprites[0].material.opacity,
+          }
+        : null,
+      firstNodePos: nodePositions.size ? [...nodePositions.values()][0].toArray() : null,
+      glowImage: GLOW && GLOW.image ? GLOW.image.width : 'NO-IMAGE',
+      nodeMapImage:
+        nodeSprites[0] && nodeSprites[0].material.map
+          ? (nodeSprites[0].material.map.image ? nodeSprites[0].material.map.image.width : 'NO-IMAGE')
+          : 'NO-MAP',
+    };
+  },
   setMode,
   get selected() { return selectedMemory; },
   get counts() { return data ? data.counts : null; },

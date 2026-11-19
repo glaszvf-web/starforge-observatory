@@ -10,7 +10,7 @@
 
 这是我在这套东西上真实发生过的事：
 
-1. 需求方给了两份成熟参考：一份单文件 Canvas 实现（`Ryder191/haloflux`），一份同作者的早期 Three.js 实现，还录了屏。
+1. 需求方给了两份成熟参考：一份单文件 Canvas 实现（`Ryder191/haloflux`），一份另一个 AI 做的 Three.js 实现（天禧 `agent-ops-lab`），还录了屏。
 2. 我读了几眼**概念**，回头继续修自己那套「WebGL 全屏光线步进 + 屏幕空间粒子」。
 3. 然后是一整晚的参数调优：光流增益 0.26 → 0.95 → 0.78 → 0.72；核半径 `R×0.030` → `0.100` → `0.085`；拖尾 1.7 → 4.2……改了 17 轮，跑了 17 轮自检，烧了十多块钱。
 4. 换来一句话：**「一坨答辩，豆包来都比弄的这个好。」**
@@ -79,14 +79,14 @@ agent-ops/
 ## 3. 怎么跑
 
 ```powershell
-cd <本目录>
-$env:DSH_MEMORY_DIR = "<本目录>\data"
+cd E:\21289\DSH\observatory\agent-ops
+$env:DSH_MEMORY_DIR = "E:\21289\DSH\observatory\agent-ops\data"
 node bin\build-graph.mjs          # 重建图（几百毫秒）
 node bin\server.mjs --port 8900   # 起服务
 # 打开 http://127.0.0.1:8900/
 ```
 
-或者跑 `bin\launch.ps1`（Windows 下自动起服务并开浏览器）。
+或者双击桌面 `爱弥斯的纸飞机\星炬观测站\星炬观测站.lnk`（冷启动约 2.4 秒）。
 
 **必须在 http 下开。** `file://` 不行 —— ES module + 相对路径的 three 会被 CORS 拦。
 
@@ -218,7 +218,7 @@ i => { y = 1 - i/(n-1)*2; ring = sqrt(1-y*y); theta = GOLDEN * i; }
 - **数据只读**：`build-graph.mjs` 和 `server.mjs` 都只读 `~/.dsh/memory`，一个字节都不写。
 - **必须在 http 下**：ES module 不允许 `file://`。
 - **别用 `UnrealBloomPass`**：这台机器上会周期性整帧发黑（已经两次复现），要发光效果就用 Sprite 光晕或低分辨率叠加。
-- **别把这份东西的商业权利搞混**：骨架来自同作者的早期实现，原是参考实现；`three.module.js` 是 MIT。要对外发布前先确认许可边界。
+- **别把这份东西的商业权利搞混**：骨架来自天禧的 `agent-ops-lab`，原是参考实现；`three.module.js` 是 MIT。要对外发布前先确认许可边界。
 
 ---
 
@@ -228,7 +228,7 @@ i => { y = 1 - i/(n-1)*2; ring = sqrt(1-y*y); theta = GOLDEN * i; }
 
 | 层 | 来源 | 权利状态 | 本机使用 |
 |---|---|---|---|
-| **三维骨架** | 同作者早期实现（另一套 AI 产物） | 没有 LICENSE 文件 | **本项目是它的改造版，属自用，不对外署名** |
+| **三维骨架** | 天禧 `agent-ops-lab`（同一个人自己的另一套 AI 产物） | 没有 LICENSE 文件 | **本项目是它的改造版，属自用，不对外署名** |
 | **视觉思路参考** | `Ryder191/haloflux` | PolyForm Noncommercial 1.0.0：禁止商用，转载二创须注明 `HALOFLUX by Ryder191` | **没有使用它的代码**，只读过思路，参考源码目录已删 |
 | **3D 引擎** | `three.module.js` r160 | MIT | 文件头 license 声明保留，没动 |
 

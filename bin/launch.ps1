@@ -4,7 +4,7 @@
 $ErrorActionPreference = "SilentlyContinue"
 Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
 
-$root = Split-Path -Parent $PSScriptRoot
+$root = "E:\21289\DSH\observatory\agent-ops"
 $data = Join-Path $root "data"
 $port = 8900
 
